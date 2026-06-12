@@ -1,0 +1,54 @@
+{
+  "name": "suretyai",
+  "version": "0.1.0",
+  "description": "The open trust layer for autonomous AI agents — deterministic gates, budget breakers, and tamper-evident action receipts.",
+  "keywords": [
+    "ai-agents",
+    "guardrails",
+    "agent-governance",
+    "human-in-the-loop",
+    "audit-trail",
+    "action-receipt",
+    "mcp",
+    "trust"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/balureddy003/suretyai.git"
+  },
+  "homepage": "https://github.com/balureddy003/suretyai#readme",
+  "bugs": {
+    "url": "https://github.com/balureddy003/suretyai/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "spec",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
