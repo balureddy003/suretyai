@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  test-node:
+    name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,3 +22,21 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  test-python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        working-directory: python
+        run: pip install -e ".[dev]"
+      - name: Test
+        working-directory: python
+        run: pytest -v
