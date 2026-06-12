@@ -22,6 +22,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Claims in the README are backed by evals — a failing eval fails CI.
+      - run: npm run eval
+      - run: npm run examples
 
   test-python:
     name: Python ${{ matrix.python }}

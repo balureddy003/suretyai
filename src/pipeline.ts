@@ -173,8 +173,14 @@ export function createPipeline(options: PipelineOptions): Pipeline {
       return {
         decision,
         allowed,
-        failed_rules: allowed ? [] : ['gate-rejected'],
-        reasons: allowed ? [] : ['Human reviewer rejected the action'],
+        failed_rules: allowed ? [] : [apprDecision === 'timeout' ? 'gate-timeout' : 'gate-rejected'],
+        reasons: allowed
+          ? []
+          : [
+              apprDecision === 'timeout'
+                ? 'Approval gate timed out — action blocked (fail closed)'
+                : 'Human reviewer rejected the action',
+            ],
         receipt: updatedReceipt,
         trust_level: level,
         trust_graduated: graduated,

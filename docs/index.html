@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surety AI — Bonded agents for the autonomous era</title>
+  <meta name="description" content="The open trust layer for autonomous AI agents. Deterministic gates, budget breakers, and tamper-evident action receipts.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="logo">Surety AI</a>
+      <nav class="nav">
+        <a href="#why">Why</a>
+        <a href="#quickstart">Quick start</a>
+        <a href="#spec">Spec</a>
+        <a href="https://github.com/balureddy003/suretyai/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Architecture</a>
+        <a href="https://github.com/balureddy003/suretyai" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Bonded agents for the autonomous era</h1>
+        <p class="tagline">The open trust layer for autonomous AI agents. Every consequential action passes through deterministic gates, stays inside hard budget breakers, and leaves a tamper-evident receipt.</p>
+        <div class="badges">
+          <span class="badge">Apache-2.0</span>
+          <span class="badge">Zero dependencies</span>
+          <span class="badge">TypeScript & Python</span>
+        </div>
+        <div class="install">
+          <code>npm install suretyai</code>
+          <button class="copy-btn" aria-label="Copy install command" onclick="copyInstall()">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="why" class="why">
+      <div class="container">
+        <h2>Why</h2>
+        <p>Agent deployments are outpacing agent governance. Existing open-source layers solve <em>content</em> safety and <em>authorization</em>. Almost nothing solves what comes next:</p>
+        <div class="invariants">
+          <div class="invariant">
+            <h3>Rules decide, LLMs propose</h3>
+            <p>An LLM may suggest an action; only deterministic rules allow it. The same action always produces the same decision.</p>
+          </div>
+          <div class="invariant">
+            <h3>Every decision leaves a receipt</h3>
+            <p>Hash of the payload, never the payload itself. Receipts are safe to ship anywhere.</p>
+          </div>
+          <div class="invariant">
+            <h3>Hard limits are hard</h3>
+            <p>Daily action and spend ceilings in integer minor units. No prompt can talk its way past them.</p>
+          </div>
+          <div class="invariant">
+            <h3>History is tamper-evident</h3>
+            <p>Receipts chain by hash. Insertion, deletion, or edits are detectable.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quickstart" class="quickstart">
+      <div class="container">
+        <h2>Quick start</h2>
+        <pre><code>import { BondLimits, createGuard } from 'suretyai'
+
+const limits = new BondLimits({
+  max_actions_per_day: 100,
+  max_spend_per_day_minor: 10_000
+})
+
+const guard = createGuard(
+  [
+    limits.rule(),
+    {
+      id: 'refund-ceiling',
+      check: (a) => a.type !== 'payment.refund'
+        || (a.payload.amount_minor as number) &lt;= 5000,
+      reason: 'Refunds above £50.00 require human approval',
+    },
+  ],
+  { agent_id: 'billing-agent', chain: true }
+)
+
+// The agent proposes; the guard decides.
+const result = guard({
+  type: 'payment.refund',
+  payload: { invoice: 'INV-1042', amount_minor: 9900 }
+})
+
+result.allowed // false
+result.reasons // ['Refunds above £50.00 require human approval']
+result.receipt // tamper-evident Action Receipt</code></pre>
+      </div>
+    </section>
+
+    <section id="receipts" class="receipts">
+      <div class="container">
+        <h2>Action Receipts</h2>
+        <p>Every decision produces a vendor-neutral, tamper-evident audit record:</p>
+        <pre><code>{
+  "id": "0d5c1f1e-7a2b-4d4e-9c64-1b6c9b9b2f10",
+  "spec": "action-receipt/v0.1",
+  "agent_id": "billing-agent",
+  "action_type": "payment.refund",
+  "payload_hash": "9f86d081…",
+  "timestamp": "2026-06-10T14:23:05.118Z",
+  "allowed": false,
+  "failed_rules": ["refund-ceiling"],
+  "outcome": "policy_blocked",
+  "prev_receipt_hash": "2c26b46b…"
+}</code></pre>
+        <p>With <code>chain: true</code>, each receipt carries the hash of the one before it. <code>verifyChain(receipts)</code> proves the history is intact.</p>
+      </div>
+    </section>
+
+    <section id="stack" class="stack">
+      <div class="container">
+        <h2>How Surety fits the stack</h2>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Question</th><th>Projects</th><th>Surety</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Content guardrails</td>
+              <td>"Is this text safe?"</td>
+              <td>LlamaFirewall, NeMo Guardrails</td>
+              <td>Complementary — run both</td>
+            </tr>
+            <tr>
+              <td>Authorization</td>
+              <td>"Is this action permitted?"</td>
+              <td>OPA/Rego, Cedar</td>
+              <td>Wraps decisions in receipts</td>
+            </tr>
+            <tr class="highlight">
+              <td><strong>Trust & accountability</strong></td>
+              <td><strong>"How much autonomy has this agent earned?"</strong></td>
+              <td><strong>Surety</strong></td>
+              <td><strong>This layer</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="spec" class="spec">
+      <div class="container">
+        <h2>Specification</h2>
+        <p>The <strong>Action Receipt v0.1</strong> specification defines a vendor-neutral audit record. It is open, unbranded, and freely implementable.</p>
+        <a href="https://github.com/balureddy003/suretyai/blob/main/spec/action-receipt.md" class="btn" target="_blank" rel="noopener">Read the spec</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Licensed under <a href="https://github.com/balureddy003/suretyai/blob/main/LICENSE" target="_blank" rel="noopener">Apache-2.0</a>. <a href="https://github.com/balureddy003/suretyai" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/balureddy003/suretyai/blob/main/ROADMAP.md" target="_blank" rel="noopener">Roadmap</a></p>
+    </div>
+  </footer>
+
+  <script>
+    function copyInstall() {
+      const code = 'npm install suretyai';
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = prev, 1500);
+      });
+    }
+  </script>
+</body>
+</html>

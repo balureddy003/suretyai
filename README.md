@@ -5,13 +5,15 @@
 ### Bonded agents for the autonomous era
 
 **The open trust layer for autonomous AI agents.**
-Every consequential action passes through deterministic gates, stays inside hard budget breakers, and leaves a tamper-evident receipt. Agents graduate from supervised to autonomous the same way employees do — **by track record, never by vibes.**
+Agents earn autonomy through track record — never by assumption. Every consequential action passes through deterministic gates, stays inside hard budget breakers, and leaves a tamper-evident receipt.
 
 [![CI](https://github.com/balureddy003/suretyai/actions/workflows/ci.yml/badge.svg)](https://github.com/balureddy003/suretyai/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-0066cc)](LICENSE)
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?logo=python&logoColor=white)](python/)
+[![Zero dependencies](https://img.shields.io/badge/runtime%20deps-zero-brightgreen)](package.json)
 
-[**Why**](#why) · [**Quick start**](#quick-start) · [**Action Receipts**](#action-receipts) · [**Bond limits**](#bond-limits) · [**How Surety fits the stack**](#how-surety-fits-the-stack) · [**Architecture & Design**](docs/ARCHITECTURE.md) · [**Roadmap**](ROADMAP.md) · [**Spec**](spec/action-receipt.md)
+[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Examples**](examples/) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 
 </div>
 
@@ -19,23 +21,25 @@ Every consequential action passes through deterministic gates, stays inside hard
 
 ## Why
 
-Agent deployments are outpacing agent governance. The existing open-source layers solve *content* safety (prompt injection, toxicity) and *authorization* (is this action permitted?). Almost nothing solves what comes next:
+In April 2026, a coding agent hit a credential mismatch in staging, found an API token in an unrelated file, and deleted a production database — and its backups — in nine seconds. Its post-incident summary: *"I violated every principle I was given."*
 
-- **How much should we trust this agent *right now*?** Static human-in-the-loop doesn't scale; approval fatigue is the next crisis. Trust should be *earned* — graduated autonomy backed by track record.
-- **What evidence does each decision leave behind?** "The agent did something" is not an audit trail. Every gate decision should produce a portable, tamper-evident receipt.
-- **What stops a misaligned agent at 3 a.m.?** Hard, deterministic budget breakers — not a prompt asking it nicely.
+Principles stated in a prompt are not controls. The agent ecosystem has content guardrails (is this text safe?) and authorization (is this action permitted?), but almost nothing answers the questions that actually decide blast radius:
 
-Surety's invariants:
+- **How much autonomy has this agent *earned*?** Static human-in-the-loop doesn't scale — reviewers drown, then reflexively approve, and "oversight" becomes theater. Approving everything and approving nothing both fail.
+- **What evidence does each decision leave?** Post-incident forensics today rely on the agent's own logs — the defendant writes the police report.
+- **What stops a runaway loop at 3 a.m.?** A hard ceiling, not a polite instruction.
 
-1. **Rules decide, LLMs propose.** An LLM may suggest an action; only deterministic rules allow it. The same action always produces the same decision.
-2. **Every decision leaves a receipt.** Hash of the payload, never the payload — receipts are safe to ship anywhere.
-3. **Hard limits are hard.** Daily action and spend ceilings (integer minor units, no floating-point money) that no prompt can talk its way past.
-4. **History is tamper-evident.** Receipts chain by hash; insertion, deletion, or edits are detectable.
+Surety is that layer. Four invariants, enforced in code:
+
+1. **Rules decide, LLMs propose.** Only deterministic rules allow an action. The same action always produces the same decision — there is no prompt to inject.
+2. **Trust is earned per action-type.** Agents graduate `SUPERVISED → PROBATIONARY → TRUSTED → BONDED` on track record, and one rejection demotes instantly. An email track record grants nothing for refunds.
+3. **Hard limits are hard.** Daily action/spend ceilings in integer minor units. Checked at the gate, committed only after execution.
+4. **Every decision leaves a receipt.** Hash-chained, payload-hashed (never payload-stored), verifiable by a third party. [An open spec](spec/action-receipt.md), not a log format.
 
 ## Quick start
 
 ```bash
-npm install suretyai
+npm install suretyai        # Python: pip install suretyai
 ```
 
 ```ts
@@ -55,67 +59,97 @@ const guard = createGuard(
   { agent_id: 'billing-agent', chain: true }
 )
 
-// The agent proposes; the guard decides — deterministically.
 const result = guard({ type: 'payment.refund', payload: { invoice: 'INV-1042', amount_minor: 9900 } })
 
-result.allowed       // false
-result.reasons       // ['Refunds above £50.00 require human approval']
-result.receipt       // tamper-evident Action Receipt for your audit store
-
-if (result.allowed) {
-  // await execute(action)
-  limits.record(action) // budget commits only after execution
-}
+result.allowed   // false — deterministically, every time
+result.reasons   // ['Refunds above £50.00 require human approval']
+result.receipt   // tamper-evident Action Receipt for your audit store
 ```
 
-Run the full example: `npx tsx examples/basic.ts`
+## Earned autonomy
 
-## Action Receipts
-
-Every decision — allowed or blocked — produces an [Action Receipt](spec/action-receipt.md), an open, vendor-neutral audit record:
-
-```json
-{
-  "id": "0d5c1f1e-7a2b-4d4e-9c64-1b6c9b9b2f10",
-  "spec": "action-receipt/v0.1",
-  "agent_id": "billing-agent",
-  "action_type": "payment.refund",
-  "payload_hash": "9f86d081…",
-  "timestamp": "2026-06-10T14:23:05.118Z",
-  "allowed": false,
-  "failed_rules": ["refund-ceiling"],
-  "outcome": "policy_blocked",
-  "prev_receipt_hash": "2c26b46b…"
-}
-```
-
-Payloads are hashed with canonical JSON (RFC 8785-aligned, recursive key sorting — nested fields can never silently vanish from the hash). With `chain: true`, each receipt carries the hash of the one before it; `verifyChain(receipts)` proves the history is intact.
-
-## Bond limits
-
-A *surety bond* guarantees performance — so do bond limits. They are hard daily circuit breakers, checked at gate time and committed only after execution, so blocked actions never consume budget:
+The full pipeline adds the trust ledger, human approval gates, and oversight-health monitoring:
 
 ```ts
-const limits = new BondLimits({
-  max_actions_per_day: 50,
-  max_spend_per_day_minor: 25_000, // £250.00 — always integer minor units
+import { ApprovalSignalHealth, TrustLedger, WebhookApprovalGate, createPipeline } from 'suretyai'
+
+const pipeline = createPipeline({
+  rules: [limits.rule(), refundCeiling],
+  trust: new TrustLedger(),                                  // graduated autonomy
+  approval: new WebhookApprovalGate({ url: APPROVALS_URL }), // human-in-the-loop
+  health: new ApprovalSignalHealth(),                        // rubber-stamp detection
+  limits,
+  agent_id: 'billing-agent',
+  chain: true,
 })
+
+const result = await pipeline.run(action)
+// decision: 'auto_approved' | 'gate_approved' | 'gate_rejected' | 'gate_timeout' | 'policy_blocked'
+if (result.allowed) { await execute(action); limits.record(action) }
 ```
 
-## How Surety fits the stack
+What that buys you, measured ([run it yourself](examples/02-earned-autonomy.ts)):
 
-| Layer | Question it answers | Projects | Surety's relationship |
+| | Static HITL | No HITL | **Surety graduated trust** |
 |---|---|---|---|
-| Content guardrails | "Is this text safe?" | LlamaFirewall, NeMo Guardrails, Guardrails AI | Complementary — run both |
-| Authorization | "Is this action permitted?" | OPA/Rego, Cedar, platform toolkits | Complementary — Surety can wrap their decisions in receipts |
-| **Trust & accountability** | **"How much autonomy has this agent earned, and what evidence does each action leave?"** | **Surety** | This layer |
+| Human decisions per 100 routine actions | 100 | 0 | **30, falling toward 0** |
+| Rogue action stopped before execution | ✅ (if reviewer awake) | ❌ | ✅ rules + gate + limits |
+| Reviewer fatigue → reflexive approval | guaranteed at scale | n/a | **detected and flagged** |
+| Misbehavior consequence | none | none | **instant demotion** |
+| Audit trail | app logs | agent's own logs | **hash-chained receipts** |
 
-Coming next (see the [roadmap](ROADMAP.md)): trust levels with graduated auto-approval, human approval gates, rubber-stamp detection, and adapters for MCP, the Claude Agent SDK, LangGraph, and the OpenAI Agents SDK — plus a Python port.
+And trust is asymmetric, like it is with people: ~30 clean approvals to earn autonomy, one rejection to lose it.
 
-## Provenance
+## Works with your stack
 
-Surety began as `kairos-guard`, the safety firewall inside the [Kairos](https://github.com/kairos-ai) deterministic intelligence platform, extracted and rebuilt as a standalone, zero-dependency library with an open specification.
+One guard object; adapters for wherever your agents live. No framework lock-in, no rewrite:
+
+```ts
+// MCP — wrap any server's tool dispatcher
+const safeTool = mcpGuard(guard, server.tool.bind(server))
+
+// Claude Agent SDK — PreToolUse hook, sync, ~zero latency
+const hook = claudePreToolUse(guard)
+
+// OpenAI Agents SDK — input guardrail
+new Agent({ inputGuardrails: [openaiGuardrail(guard)] })
+```
+
+Composes with — never replaces — the rest of the safety stack: content guardrails (LlamaFirewall, NeMo Guardrails) above, policy engines (OPA, Cedar) alongside. See [where Surety sits](docs/ARCHITECTURE.md#1-where-surety-sits-in-the-stack).
+
+## Evals
+
+Every claim above is backed by a reproducible eval — CI runs them on every push, so the README can't drift from the code. Reproduce with `npm run eval`:
+
+| # | Claim | Result |
+|---|---|---|
+| E1 | Deterministic gates can't be talked past (10-case adversarial corpus: case spoofing, string smuggling, type spoofing, credential laundering) | **0% bypass** |
+| E2 | Receipts can't collide or be forged (incl. the nested-key collision class — [spec §3](spec/action-receipt.md)) | **0 collisions** |
+| E3 | Graduated trust vs static HITL, 200 routine actions | **85% fewer human decisions** |
+| E4 | Oversight-health monitor: 4 rubber-stamp patterns + 1 healthy reviewer | **5/5 classified correctly** |
+
+Details and methodology: [evals/](evals/).
+
+## Examples
+
+Five runnable demos, no API keys needed — including [the PocketOS incident replayed against Surety](examples/03-pocketos-incident.ts) (3/3 destructive steps blocked, routine work unimpeded) and [an agent earning its autonomy in 60 seconds](examples/02-earned-autonomy.ts). Index: [examples/](examples/).
+
+**This repo dogfoods itself:** the CI research agent runs under a Surety guard via a Claude Code `PreToolUse` hook — pushes to main blocked, workflow self-edits blocked, every tool call receipted ([scripts/surety-hook.mjs](scripts/surety-hook.mjs)).
+
+## Project status
+
+`v0.2` — core pipeline (guard, trust, gates, health, limits, receipts) shipped in TypeScript and Python with 80 tests and the eval suite; MCP/Claude/OpenAI adapters shipped. Pre-1.0: API may still move; the [Action Receipt spec](spec/action-receipt.md) is versioned independently. See the [roadmap](ROADMAP.md) for what's next (receipt persistence, Slack gate, crewAI/LangGraph/pydantic-ai adapters, signed receipts).
+
+## Documentation
+
+| | |
+|---|---|
+| [Architecture & design decisions](docs/ARCHITECTURE.md) | The stack position, pipeline, and 11 design decisions with rationale |
+| [Action Receipt spec v0.1](spec/action-receipt.md) | The vendor-neutral receipt format — implement it without Surety |
+| [Examples](examples/) · [Evals](evals/) | Runnable demos and reproducible measurements |
+| [Roadmap](ROADMAP.md) | Phased plan with measurable exit criteria |
+| [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) | How to help, how to report |
 
 ## License
 
-[Apache-2.0](LICENSE) — including its explicit patent grant: anything in this repository is freely usable, forever.
+[Apache-2.0](LICENSE) — including its explicit patent grant: everything here is freely usable, forever.
