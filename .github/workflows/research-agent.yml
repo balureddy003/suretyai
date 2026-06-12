@@ -1,0 +1,97 @@
+name: Research Agent
+
+# Weekly autonomous market/GitHub research that proposes roadmap and
+# research-doc updates via PR. The agent itself runs under Surety-style
+# constraints: bounded turns, an explicit tool allowlist, and PR-only
+# output — it can never push to main.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  collect-and-analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Deterministic data gathering — no LLM. Live GitHub/npm/PyPI numbers.
+      - name: Collect intelligence snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/collect-intel.mjs
+
+      - name: Show digest in run log
+        run: cat intel/digest.md
+
+      # Analysis + PR authoring — the research agent.
+      - name: Run research agent
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --model claude-opus-4-8
+            --max-turns 60
+            --allowedTools "Read,Glob,Grep,Write,Edit,WebSearch,WebFetch,Bash(git:*),Bash(gh pr:*),Bash(node:*)"
+          prompt: |
+            You are the weekly research agent for Surety AI — the open trust
+            layer for autonomous AI agents (graduated trust, approval gates,
+            tamper-evident Action Receipts, bond limits).
+
+            FRESH DATA: intel/digest.md and intel/latest.json were just
+            regenerated with live GitHub star counts, staleness, discovery
+            results, and package download numbers. Read them first.
+
+            CONTEXT DOCS: docs/RESEARCH.md (market research, landscape table,
+            fitment, architecture) and ROADMAP.md (phased plan).
+
+            YOUR TASK:
+            1. Read intel/digest.md, docs/RESEARCH.md, and ROADMAP.md.
+            2. Compare the fresh data against what RESEARCH.md §3 claims:
+               star counts, staleness/abandonment, new entrants in the
+               trust/governance lane.
+            3. Use WebSearch to check for material news since the doc's date:
+               - NIST AI Agent Standards Initiative progress
+               - OWASP Agentic Top 10 changes
+               - New production AI-agent incidents (the PocketOS class)
+               - New or pivoting competitors in agent trust/HITL/receipts
+            4. Decide whether anything is MATERIAL: a tracked project gone
+               stale or pivoted, a new entrant >500 stars in our lane, a
+               standards milestone, a new incident, or a roadmap item that
+               fresh evidence makes more or less urgent.
+
+            IF NOTHING MATERIAL: do not open a PR. Print a short summary of
+            what you checked and why no update is needed, and stop.
+
+            IF MATERIAL FINDINGS EXIST:
+            - Create a branch named research/intel-<YYYY-MM-DD>.
+            - Update docs/RESEARCH.md surgically: refresh the §3 table
+              numbers and dates, add new entrants with one-line analysis,
+              add new incidents/standards news to §2 with source links.
+            - Update ROADMAP.md only if a finding genuinely changes
+              priorities (say why in the commit message).
+            - Commit intel/latest.json and intel/digest.md so snapshots
+              accumulate history.
+            - Open ONE pull request titled "Research agent: <date> intel
+              update". The PR body must lead with a "What changed in the
+              market" summary (3-6 bullets, sources linked), then list the
+              doc edits made. Never push to main directly.
+
+            HARD CONSTRAINTS:
+            - Never rewrite the vision, positioning, or design decisions —
+              additive, evidence-backed edits only.
+            - Every new claim needs a source URL.
+            - One PR maximum per run.
+            - If WebSearch is unavailable or rate-limited, proceed with the
+              intel data alone and note the limitation in the PR body.
