@@ -1,12 +1,14 @@
 {
-  "collected_at": "2026-06-12T08:11:38.246Z",
-  "previous_collected_at": null,
+  "collected_at": "2026-06-12T08:20:55.880Z",
+  "previous_collected_at": "2026-06-12T08:11:38.246Z",
+  "material": false,
+  "material_reasons": [],
   "self": {
     "repo": "balureddy003/suretyai",
     "stars": 0,
     "forks": 0,
     "open_issues": 0,
-    "pushed_at": "2026-06-12T08:03:14Z",
+    "pushed_at": "2026-06-12T08:12:04Z",
     "description": "bonded agents for the autonomous era"
   },
   "downloads": {
@@ -24,7 +26,7 @@
     },
     {
       "repo": "NVIDIA-NeMo/Guardrails",
-      "stars": 6407,
+      "stars": 6408,
       "forks": 723,
       "open_issues": 185,
       "pushed_at": "2026-06-11T23:20:02Z",
@@ -64,7 +66,7 @@
     },
     {
       "repo": "invariantlabs-ai/invariant",
-      "stars": 426,
+      "stars": 427,
       "forks": 46,
       "open_issues": 11,
       "pushed_at": "2026-01-12T12:50:28Z",
@@ -96,7 +98,7 @@
     },
     {
       "repo": "langchain-ai/langgraph",
-      "stars": 34500,
+      "stars": 34502,
       "forks": 5795,
       "open_issues": 566,
       "pushed_at": "2026-06-12T04:07:49Z",
@@ -104,7 +106,7 @@
     },
     {
       "repo": "crewAIInc/crewAI",
-      "stars": 53305,
+      "stars": 53306,
       "forks": 7459,
       "open_issues": 437,
       "pushed_at": "2026-06-12T07:50:42Z",
@@ -122,144 +124,35 @@
   "discovery": [
     {
       "query": "agent guardrails created:>2026-03-14 stars:>30",
-      "items": [
-        {
-          "repo": "future-agi/future-agi",
-          "stars": 1135,
-          "created_at": "2026-04-23",
-          "pushed_at": "2026-06-12",
-          "description": "Open-source, end-to-end platform for evaluating, observing, and improving LLM and AI agent applications. Tracing · Evals"
-        },
-        {
-          "repo": "SponsioLabs/Sponsio",
-          "stars": 476,
-          "created_at": "2026-04-04",
-          "pushed_at": "2026-06-10",
-          "description": "Deterministic safety solutions for probabilistic AI agents"
-        },
-        {
-          "repo": "statewright/statewright",
-          "stars": 399,
-          "created_at": "2026-05-03",
-          "pushed_at": "2026-06-06",
-          "description": "State machine guardrails for AI agents"
-        },
-        {
-          "repo": "xwtro0tk1t-cloud/harness",
-          "stars": 324,
-          "created_at": "2026-04-05",
-          "pushed_at": "2026-05-04",
-          "description": "Harness is an AI Agent development guardrail Meta-Skill that establishes four layers of defense for any project in one c"
-        },
-        {
-          "repo": "jmstar85/oh-my-githubcopilot",
-          "stars": 123,
-          "created_at": "2026-04-06",
-          "pushed_at": "2026-05-20",
-          "description": "Ultimate Harness Automation for Github Copilot on VS Code. It provides 28+ specialized agents, 30+ reusable skills, hook"
-        },
-        {
-          "repo": "buptlg/fireagent",
-          "stars": 106,
-          "created_at": "2026-03-23",
-          "pushed_at": "2026-06-08",
-          "description": "Knowledge-enhanced multimodal Fire Safety Agent with two-hop reasoning, evidence-tree RAG, open-set guardrails, and four"
-        },
-        {
-          "repo": "Houseofmvps/ultraship",
-          "stars": 104,
-          "created_at": "2026-03-24",
-          "pushed_at": "2026-05-18",
-          "description": "\"ULTRASHIP\" Claude Code plugin — 39 skills, 33 tools, 11 agents for ship-ready workflows: planning, review, pentesting, "
-        },
-        {
-          "repo": "QuanZ827/zexus",
-          "stars": 98,
-          "created_at": "2026-04-29",
-          "pushed_at": "2026-06-02",
-          "description": "In-process Revit AI agent with dynamic C# code execution, multi-provider LLM support, and a guardrail system for safe BI"
-        }
-      ]
+      "items": []
     },
     {
       "query": "agent governance pushed:>2026-05-29 stars:>100",
-      "items": [
-        {
-          "repo": "kite-org/kite",
-          "stars": 2754,
-          "created_at": "2025-06-17",
-          "pushed_at": "2026-06-10",
-          "description": "🪁 A lightweight, modern Kubernetes dashboard that unifies multi-cluster and resource management, enterprise-grade user "
-        },
-        {
-          "repo": "event-catalog/eventcatalog",
-          "stars": 2731,
-          "created_at": "2021-11-18",
-          "pushed_at": "2026-06-10",
-          "description": "The discovery and governance layer for event-driven systems. Document your domains, services, events and schemas — for y"
-        },
-        {
-          "repo": "EXboys/evotown",
-          "stars": 894,
-          "created_at": "2026-03-02",
-          "pushed_at": "2026-06-12",
-          "description": "a middle platform for enterprise Agent runtime governance and capability assets — connect OpenClaw, Hermes, SkillLite, a"
-        },
-        {
-          "repo": "cisco-ai-defense/defenseclaw",
-          "stars": 732,
-          "created_at": "2026-03-23",
-          "pushed_at": "2026-06-12",
-          "description": "Security Governance for Agentic AI"
-        },
-        {
-          "repo": "fjb040911/ai-rules",
-          "stars": 590,
-          "created_at": "2026-03-06",
-          "pushed_at": "2026-06-02",
-          "description": "ai-rules is a governance framework designed to solve \"Architectural Decay\" in AI-driven development. It forces AI Agents"
-        },
-        {
-          "repo": "cordum-io/cordum",
-          "stars": 486,
-          "created_at": "2026-01-11",
-          "pushed_at": "2026-06-09",
-          "description": "The open agent control plane. Govern autonomous AI agents with pre-execution policy enforcement, approval gates, and aud"
-        },
-        {
-          "repo": "TheLunarCompany/lunar",
-          "stars": 454,
-          "created_at": "2023-08-15",
-          "pushed_at": "2026-06-11",
-          "description": "lunar.dev: Agent native MCP Gateway for governance and security"
-        }
-      ]
+      "items": []
     },
     {
       "query": "\"human in the loop\" agent approval stars:>50 pushed:>2026-05-13",
-      "items": [
-        {
-          "repo": "Justin0504/Aegis",
-          "stars": 356,
-          "created_at": "2026-03-04",
-          "pushed_at": "2026-06-11",
-          "description": "Runtime policy enforcement for AI agents. Cryptographic audit trail, human-in-the-loop approvals, kill switch. Zero code"
-        },
-        {
-          "repo": "sagents-ai/sagents",
-          "stars": 226,
-          "created_at": "2026-02-04",
-          "pushed_at": "2026-06-11",
-          "description": "Build interactive AI agents in Elixir with OTP supervision, middleware composition, human-in-the-loop approvals, sub-age"
-        },
-        {
-          "repo": "xbrxr03/clawos",
-          "stars": 53,
-          "created_at": "2026-03-18",
-          "pushed_at": "2026-06-05",
-          "description": "🤖 Local AI agent for your laptop. Voice activation, multi-step tool use, 7-layer memory, human-in-the-loop approvals. Z"
-        }
-      ]
+      "items": []
     }
+  ],
+  "seen_discoveries": [
+    "future-agi/future-agi",
+    "SponsioLabs/Sponsio",
+    "statewright/statewright",
+    "xwtro0tk1t-cloud/harness",
+    "jmstar85/oh-my-githubcopilot",
+    "buptlg/fireagent",
+    "Houseofmvps/ultraship",
+    "QuanZ827/zexus",
+    "kite-org/kite",
+    "event-catalog/eventcatalog",
+    "EXboys/evotown",
+    "cisco-ai-defense/defenseclaw",
+    "fjb040911/ai-rules",
+    "cordum-io/cordum",
+    "TheLunarCompany/lunar",
+    "Justin0504/Aegis",
+    "sagents-ai/sagents",
+    "xbrxr03/clawos"
   ]
 }

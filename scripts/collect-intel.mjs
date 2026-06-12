@@ -71,14 +71,19 @@ async function repoStats(fullName) {
   }
 }
 
-async function discover(query) {
+async function discover(query, previouslySeen) {
   const q = query.replace('{{90d}}', daysAgo(90)).replace('{{14d}}', daysAgo(14)).replace('{{30d}}', daysAgo(30))
-  const d = await getJson(`${GITHUB_API}/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=8`)
+  const d = await getJson(`${GITHUB_API}/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=6`)
   if (d.__error || !d.items) return { query: q, error: d.__error ?? 'no items', items: [] }
   return {
     query: q,
     items: d.items
-      .filter((r) => !TRACKED_REPOS.includes(r.full_name) && r.full_name !== 'balureddy003/suretyai')
+      .filter(
+        (r) =>
+          !TRACKED_REPOS.includes(r.full_name) &&
+          r.full_name !== 'balureddy003/suretyai' &&
+          !previouslySeen.has(r.full_name)
+      )
       .map((r) => ({
         repo: r.full_name,
         stars: r.stargazers_count,
@@ -119,13 +124,60 @@ const collected_at = new Date().toISOString()
 const tracked = []
 for (const repo of TRACKED_REPOS) tracked.push(await repoStats(repo))
 
+// Suppress discoveries already surfaced in prior snapshots — the agent only
+// needs to see each new entrant once. (Token optimization: smaller digest.)
+const previouslySeen = new Set(
+  [...(prev?.discovery ?? []).flatMap((d) => d.items.map((i) => i.repo)), ...(prev?.seen_discoveries ?? [])]
+)
 const discovery = []
-for (const q of DISCOVERY_QUERIES) discovery.push(await discover(q))
+for (const q of DISCOVERY_QUERIES) discovery.push(await discover(q, previouslySeen))
+
+const seen_discoveries = [...new Set([...previouslySeen, ...discovery.flatMap((d) => d.items.map((i) => i.repo))])]
 
 const downloads = await packageDownloads()
 const self = await repoStats('balureddy003/suretyai')
 
-const snapshot = { collected_at, previous_collected_at: prev?.collected_at ?? null, self, downloads, tracked, discovery }
+// ---------------------------------------------------------------------------
+// Materiality gate — deterministic decision on whether the (expensive) LLM
+// analysis step should run at all this week. No deltas → no agent → no tokens.
+// ---------------------------------------------------------------------------
+const reasons = []
+if (!prev) reasons.push('first run — no baseline snapshot')
+for (const r of tracked) {
+  if (r.error) continue
+  const old = prev?.tracked?.find((p) => p.repo === r.repo)
+  if (old?.stars != null && Math.abs(r.stars - old.stars) >= 200) {
+    reasons.push(`${r.repo} star delta ${r.stars - old.stars >= 0 ? '+' : ''}${r.stars - old.stars}`)
+  }
+  const days = Math.round((Date.now() - new Date(r.pushed_at).getTime()) / 86_400_000)
+  const oldDays = old ? Math.round((new Date(collected_at) - new Date(old.pushed_at)) / 86_400_000) : 0
+  if (days > 90 && old && oldDays <= 90) reasons.push(`${r.repo} newly stale (${days}d)`)
+}
+for (const d of discovery) {
+  for (const i of d.items) {
+    if (i.stars >= 300) reasons.push(`new entrant ${i.repo} (${i.stars} stars)`)
+  }
+}
+if (downloads.npm_weekly != null && prev?.downloads?.npm_weekly == null) reasons.push('npm package went live')
+if (downloads.pypi_weekly != null && prev?.downloads?.pypi_weekly == null) reasons.push('PyPI package went live')
+const material = reasons.length > 0
+
+if (process.env.GITHUB_OUTPUT) {
+  const { appendFileSync } = await import('node:fs')
+  appendFileSync(process.env.GITHUB_OUTPUT, `material=${material}\nreasons=${reasons.join('; ').slice(0, 500)}\n`)
+}
+
+const snapshot = {
+  collected_at,
+  previous_collected_at: prev?.collected_at ?? null,
+  material,
+  material_reasons: reasons,
+  self,
+  downloads,
+  tracked,
+  discovery,
+  seen_discoveries,
+}
 
 await mkdir('intel', { recursive: true })
 await writeFile('intel/latest.json', JSON.stringify(snapshot, null, 2) + '\n')
@@ -135,6 +187,10 @@ const staleDays = (pushed) => Math.round((Date.now() - new Date(pushed).getTime(
 const digest = `# Intel Digest — ${collected_at.slice(0, 10)}
 
 Auto-collected by scripts/collect-intel.mjs. Deltas are vs the previous snapshot${prev ? ` (${prev.collected_at.slice(0, 10)})` : ' (none — first run)'}.
+
+## Materiality: ${material ? 'MATERIAL — analysis warranted' : 'nothing material — analysis skipped'}
+
+${reasons.map((r) => `- ${r}`).join('\n') || '_No triggers fired._'}
 
 ## Surety AI itself
 

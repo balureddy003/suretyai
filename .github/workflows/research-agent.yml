@@ -1,32 +1,46 @@
 name: Research Agent
 
 # Weekly autonomous market/GitHub research that proposes roadmap and
-# research-doc updates via PR. The agent itself runs under Surety-style
-# constraints: bounded turns, an explicit tool allowlist, and PR-only
-# output — it can never push to main.
+# research-doc updates via PR.
+#
+# Token-optimized two-stage design:
+#   1. A deterministic collector computes a MATERIALITY verdict from live
+#      data. Weeks with no deltas never invoke the LLM at all — zero tokens.
+#   2. When material, the agent runs with a trimmed digest (deltas only,
+#      previously-seen discoveries suppressed) and a bounded turn budget.
+#
+# Dogfooding: the agent's own tool calls are gated by suretyai via a
+# Claude Code PreToolUse hook (.claude/settings.json → scripts/surety-hook.mjs).
+# Every decision leaves a hash-chained Action Receipt in intel/receipts.jsonl,
+# committed with the PR as the agent's own audit trail.
 
 on:
   schedule:
     - cron: "0 6 * * 1" # Mondays 06:00 UTC
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Run analysis even if nothing material"
+        type: boolean
+        default: false
 
 jobs:
-  collect-and-analyze:
+  research:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      # Deterministic data gathering — no LLM. Live GitHub/npm/PyPI numbers.
+      # Stage 1 — deterministic data gathering + materiality verdict. No LLM.
       - name: Collect intelligence snapshot
+        id: collect
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/collect-intel.mjs
@@ -34,64 +48,53 @@ jobs:
       - name: Show digest in run log
         run: cat intel/digest.md
 
-      # Analysis + PR authoring — the research agent.
-      - name: Run research agent
+      - name: Skip notice
+        if: steps.collect.outputs.material != 'true' && inputs.force != true
+        run: echo "Nothing material this week — LLM analysis skipped (0 tokens spent)."
+
+      # Build the library so the surety-hook can enforce against dist/.
+      - name: Build suretyai for the guard hook
+        if: steps.collect.outputs.material == 'true' || inputs.force == true
+        run: npm ci && npm run build
+
+      # Stage 2 — analysis + PR authoring, only when warranted.
+      - name: Run research agent (guarded by suretyai)
+        if: steps.collect.outputs.material == 'true' || inputs.force == true
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model claude-opus-4-8
-            --max-turns 60
+            --max-turns 40
             --allowedTools "Read,Glob,Grep,Write,Edit,WebSearch,WebFetch,Bash(git:*),Bash(gh pr:*),Bash(node:*)"
           prompt: |
-            You are the weekly research agent for Surety AI — the open trust
-            layer for autonomous AI agents (graduated trust, approval gates,
-            tamper-evident Action Receipts, bond limits).
+            You are the weekly research agent for Surety AI (open trust layer
+            for AI agents: graduated trust, approval gates, Action Receipts,
+            bond limits). Your tool calls are guarded by suretyai itself via
+            a PreToolUse hook; if a call is blocked, read the reason and
+            adjust — do not retry verbatim.
 
-            FRESH DATA: intel/digest.md and intel/latest.json were just
-            regenerated with live GitHub star counts, staleness, discovery
-            results, and package download numbers. Read them first.
+            The collector flagged MATERIAL changes:
+            ${{ steps.collect.outputs.reasons }}
 
-            CONTEXT DOCS: docs/RESEARCH.md (market research, landscape table,
-            fitment, architecture) and ROADMAP.md (phased plan).
+            1. Read intel/digest.md (fresh data; the Materiality section
+               lists exactly what changed — focus there, skip what didn't).
+            2. Read docs/RESEARCH.md §2-3 and ROADMAP.md.
+            3. WebSearch ONLY the flagged items plus: NIST agent standards
+               progress, new agent incidents, new competitors in the
+               trust/HITL lane. Max ~6 searches.
+            4. On a branch research/intel-<YYYY-MM-DD>:
+               - Surgically update docs/RESEARCH.md (§3 table numbers/dates,
+                 new entrants with one-line lane assessment, new §2 evidence
+                 with source links).
+               - Update ROADMAP.md only if evidence changes a priority.
+               - Commit intel/latest.json, intel/digest.md, and
+                 intel/receipts.jsonl (your own audit trail).
+            5. Open ONE PR titled "Research agent: <date> intel update".
+               Body: 3-6 "what changed in the market" bullets with sources,
+               then the doc edits made.
 
-            YOUR TASK:
-            1. Read intel/digest.md, docs/RESEARCH.md, and ROADMAP.md.
-            2. Compare the fresh data against what RESEARCH.md §3 claims:
-               star counts, staleness/abandonment, new entrants in the
-               trust/governance lane.
-            3. Use WebSearch to check for material news since the doc's date:
-               - NIST AI Agent Standards Initiative progress
-               - OWASP Agentic Top 10 changes
-               - New production AI-agent incidents (the PocketOS class)
-               - New or pivoting competitors in agent trust/HITL/receipts
-            4. Decide whether anything is MATERIAL: a tracked project gone
-               stale or pivoted, a new entrant >500 stars in our lane, a
-               standards milestone, a new incident, or a roadmap item that
-               fresh evidence makes more or less urgent.
-
-            IF NOTHING MATERIAL: do not open a PR. Print a short summary of
-            what you checked and why no update is needed, and stop.
-
-            IF MATERIAL FINDINGS EXIST:
-            - Create a branch named research/intel-<YYYY-MM-DD>.
-            - Update docs/RESEARCH.md surgically: refresh the §3 table
-              numbers and dates, add new entrants with one-line analysis,
-              add new incidents/standards news to §2 with source links.
-            - Update ROADMAP.md only if a finding genuinely changes
-              priorities (say why in the commit message).
-            - Commit intel/latest.json and intel/digest.md so snapshots
-              accumulate history.
-            - Open ONE pull request titled "Research agent: <date> intel
-              update". The PR body must lead with a "What changed in the
-              market" summary (3-6 bullets, sources linked), then list the
-              doc edits made. Never push to main directly.
-
-            HARD CONSTRAINTS:
-            - Never rewrite the vision, positioning, or design decisions —
-              additive, evidence-backed edits only.
-            - Every new claim needs a source URL.
-            - One PR maximum per run.
-            - If WebSearch is unavailable or rate-limited, proceed with the
-              intel data alone and note the limitation in the PR body.
+            Constraints: additive evidence-backed edits only — never rewrite
+            vision/positioning/design decisions. Every claim needs a source
+            URL. Never push main (the guard blocks it anyway).
