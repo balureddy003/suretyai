@@ -11,7 +11,7 @@ Every consequential action passes through deterministic gates, stays inside hard
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-0066cc)](LICENSE)
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 
-[**Why**](#why) · [**Quick start**](#quick-start) · [**Action Receipts**](#action-receipts) · [**Bond limits**](#bond-limits) · [**How Surety fits the stack**](#how-surety-fits-the-stack) · [**Research & Strategy**](docs/RESEARCH.md) · [**Roadmap**](ROADMAP.md) · [**Spec**](spec/action-receipt.md)
+[**Why**](#why) · [**Quick start**](#quick-start) · [**Action Receipts**](#action-receipts) · [**Bond limits**](#bond-limits) · [**How Surety fits the stack**](#how-surety-fits-the-stack) · [**Architecture & Design**](docs/ARCHITECTURE.md) · [**Roadmap**](ROADMAP.md) · [**Spec**](spec/action-receipt.md)
 
 </div>
 

@@ -12,7 +12,7 @@
  * Wired up in .claude/settings.json. Requires `npm run build` (imports dist).
  */
 
-import { appendFileSync, existsSync, readFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 
 const RECEIPTS = 'intel/receipts.jsonl'
 const MAX_ACTIONS_PER_RUN = 300
@@ -85,6 +85,7 @@ const result = guard({ type: `tool.${toolName}`, payload })
 
 // Chain across hook invocations: each process is fresh, so we link
 // receipts manually via the hash of the last persisted receipt.
+mkdirSync('intel', { recursive: true })
 const prev = lastReceiptHash()
 const receipt = prev ? { ...result.receipt, prev_receipt_hash: prev } : result.receipt
 appendFileSync(RECEIPTS, JSON.stringify(receipt) + '\n')
