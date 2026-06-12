@@ -17,6 +17,15 @@ from suretyai.guard import (
     GuardOptions,
 )
 from suretyai.limits import BondLimits, BondLimitsConfig
+from suretyai.trust import (
+    TrustLedger,
+    TrustLevel,
+    TRUST_LEVEL_NAMES,
+    GraduationThresholds,
+    TrustEntry,
+    RecordResult,
+)
+from suretyai.health import ApprovalSignalHealth, HealthReport, HealthFlag
 from suretyai.types import (
     ActionReceipt,
     AgentAction,
@@ -25,7 +34,7 @@ from suretyai.types import (
     ReceiptOutcome,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "canonicalize",
@@ -38,6 +47,15 @@ __all__ = [
     "GuardOptions",
     "BondLimits",
     "BondLimitsConfig",
+    "TrustLedger",
+    "TrustLevel",
+    "TRUST_LEVEL_NAMES",
+    "GraduationThresholds",
+    "TrustEntry",
+    "RecordResult",
+    "ApprovalSignalHealth",
+    "HealthReport",
+    "HealthFlag",
     "ActionReceipt",
     "AgentAction",
     "GuardResult",
