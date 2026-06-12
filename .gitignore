@@ -3,3 +3,8 @@ dist/
 coverage/
 *.log
 .DS_Store
+python/.venv/
+python/dist/
+python/*.egg-info/
+__pycache__/
+*.pyc
