@@ -1,6 +1,6 @@
 {
   "name": "suretyai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The open trust layer for autonomous AI agents — deterministic gates, budget breakers, and tamper-evident action receipts.",
   "keywords": [
     "ai-agents",
