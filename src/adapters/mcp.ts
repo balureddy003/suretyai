@@ -9,7 +9,7 @@
  * @example with @modelcontextprotocol/sdk
  * ```ts
  * import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
- * import { createGuard, mcpGuard } from 'suretyai'
+ * import { createGuard, mcpGuard } from '@suretyainpm/suretyai'
  *
  * const guard = createGuard([noDeleteRule, spendCeiling])
  * const server = new McpServer({ name: 'my-server', version: '1.0.0' })

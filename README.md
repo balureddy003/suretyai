@@ -52,11 +52,11 @@ See [reliability research](docs/RELIABILITY_RESEARCH.md).
 ## Quick start
 
 ```bash
-npm install suretyai        # Python: pip install suretyai
+npm install @suretyainpm/suretyai        # Python: pip install suretyai
 ```
 
 ```ts
-import { BondLimits, createGuard } from 'suretyai'
+import { BondLimits, createGuard } from '@suretyainpm/suretyai'
 
 const limits = new BondLimits({ max_actions_per_day: 100, max_spend_per_day_minor: 10_000 })
 
@@ -84,7 +84,7 @@ result.receipt   // tamper-evident Action Receipt for your audit store
 The full pipeline adds the trust ledger, human approval gates, and oversight-health monitoring:
 
 ```ts
-import { ApprovalSignalHealth, TrustLedger, WebhookApprovalGate, createPipeline } from 'suretyai'
+import { ApprovalSignalHealth, TrustLedger, WebhookApprovalGate, createPipeline } from '@suretyainpm/suretyai'
 
 const pipeline = createPipeline({
   rules: [limits.rule(), refundCeiling],

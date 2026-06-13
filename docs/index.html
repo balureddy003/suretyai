@@ -35,7 +35,7 @@
           <span class="badge">TypeScript & Python</span>
         </div>
         <div class="install">
-          <code>npm install suretyai</code>
+          <code>npm install @suretyainpm/suretyai</code>
           <button class="copy-btn" aria-label="Copy install command" onclick="copyInstall()">Copy</button>
         </div>
       </div>
@@ -69,7 +69,7 @@
     <section id="quickstart" class="quickstart">
       <div class="container">
         <h2>Quick start</h2>
-        <pre><code>import { BondLimits, createGuard } from 'suretyai'
+        <pre><code>import { BondLimits, createGuard } from '@suretyainpm/suretyai'
 
 const limits = new BondLimits({
   max_actions_per_day: 100,
@@ -169,7 +169,7 @@ result.receipt // tamper-evident Action Receipt</code></pre>
 
   <script>
     function copyInstall() {
-      const code = 'npm install suretyai';
+      const code = 'npm install @suretyainpm/suretyai';
       navigator.clipboard.writeText(code).then(() => {
         const btn = document.querySelector('.copy-btn');
         const prev = btn.textContent;
