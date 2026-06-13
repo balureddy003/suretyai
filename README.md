@@ -15,7 +15,7 @@ proposal and the real world.
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?logo=python&logoColor=white)](python/)
 [![Zero dependencies](https://img.shields.io/badge/runtime%20deps-zero-brightgreen)](package.json)
 
-[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Examples**](examples/) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
+[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Production readiness**](#production-readiness) · [**Examples**](examples/) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 
 </div>
 
@@ -166,7 +166,23 @@ Five runnable demos, no API keys needed — including [the PocketOS incident rep
 
 ## Project status
 
-`v0.2` — core pipeline (guard, trust, gates, health, limits, receipts) shipped in TypeScript and Python with 80 tests and the eval suite; MCP/Claude/OpenAI adapters shipped. Pre-1.0: API may still move; the [Action Receipt spec](spec/action-receipt.md) is versioned independently. See the [roadmap](ROADMAP.md) for what's next (receipt persistence, Slack gate, crewAI/LangGraph/pydantic-ai adapters, signed receipts).
+`v0.2` — core pipeline (guard, trust, gates, health, limits, receipts) shipped in TypeScript and Python with 80+ tests and the eval suite; MCP/Claude/OpenAI adapters shipped. Pre-1.0: API may still move; the [Action Receipt spec](spec/action-receipt.md) is versioned independently. See the [roadmap](ROADMAP.md) for what's next (receipt persistence, Slack gate, crewAI/LangGraph/pydantic-ai adapters, signed receipts).
+
+## Production readiness
+
+Read this before putting Surety on a real money path — we'd rather you know the edges than discover them.
+
+**Ready now**
+- The deterministic guard, bond-limit *checks*, canonical hashing, and receipt chaining are pure and side-effect-free — safe to run inline on a hot path.
+- TS and Python cores are at parity for guard / trust / limits / health; the full async pipeline and approval gates are TypeScript-only today.
+
+**Not ready yet — design around these**
+- **State is in-memory and single-process.** `TrustLedger`, `BondLimits`, `ApprovalSignalHealth`, and the receipt chain live in process memory. Across concurrent workers or replicas you get *per-process* trust and limits — two workers can each approve up to the "daily" ceiling, and trust earned on one isn't seen by another. For now, run one guard instance behind a queue, or persist/reload manually via `TrustLedger.export()/from()`. Durable Postgres/Redis backends with atomic limits are the headline of [Phase 2](ROADMAP.md).
+- **Budget commit is the caller's job.** The pipeline *checks* limits but does not record them; call `limits.record(action)` after a successful execution or ceilings won't enforce (see [examples/02](examples/02-earned-autonomy.ts)).
+- **Approval is a prediction, not proof.** Trust graduates on approvals; close the loop with `trust.recordOutcome(success)` so an approved-but-ineffective agent is demoted. Without outcome reporting, "trusted" means "approved," not "worked."
+- **The bundled evals are internal simulations**, not field evidence — they prove the code behaves as specified on synthetic workloads (the simulation deliberately leaves an `ambiguous_intent` class unblocked). Validate against your own traces before trusting the numbers.
+
+In short: today Surety is production-ready as a **single-instance** decision boundary with manual state persistence. Distributed, durable, atomic state is next.
 
 ## Documentation
 
