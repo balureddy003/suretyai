@@ -250,7 +250,7 @@ export async function runSimulation(
 }
 
 /**
- * Parses a labeled JSONL export from Kairos or another execution system.
+ * Parses a labeled JSONL export from an external execution system.
  * Each non-empty line must match SimulationCase.
  */
 export function parseJsonlDataset(

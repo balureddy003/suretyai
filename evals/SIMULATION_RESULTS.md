@@ -44,5 +44,5 @@ new evidence, clarification, forecasting, canaries, or human review are needed.
 This is a **synthetic** comparative simulation. It proves
 that the framework and configured controls behave as measured on this dataset.
 Synthetic or historical replay does not prove future production effectiveness.
-Use independently labeled Kairos shadow or field traces before making
-field-performance claims.
+Use independently labeled shadow or field traces from your own execution
+system before making field-performance claims.

@@ -31,8 +31,7 @@ Research architecture for calibrated forecasting and ML:
 - [x] **ApprovalSignalHealth** — rubber-stamp detection (rapid_fire, batch_approval, no_variance, dismiss_spike)
 - [x] **Pipeline** — rules → trust → gate → health → receipt in one `await pipeline.run(action)`; fails closed when misconfigured
 - [x] **Adapters**: MCP (`wrapToolHandler`/`mcpGuard`), Claude Agent SDK (`claudePreToolUse`), OpenAI Agents SDK (`openaiGuardrail`)
-- [x] **Kairos PolicyProvider adapter**: deterministic enforcement of Outcome Contract autonomy policies
-- [x] **Python parity** (trust + health; 35 tests)
+- [x] **Python parity** (trust + health; 38 tests)
 
 ## Phase 1.5 — Credibility & distribution 🔶 in progress
 

@@ -52,7 +52,7 @@ Authorization answers a static question; trust answers a dynamic one. A policy s
                allowed ──► execute ──► limits.record(action)
 ```
 
-**Module map (TypeScript + Python parity):** `canonical` (RFC 8785-aligned hashing) · `guard` (rules → receipt) · `limits` (circuit breakers) · `trust` (graduated ledger) · `approval` (gate interface + 3 implementations) · `health` (rubber-stamp detection) · `pipeline` (orchestration) · `adapters/{mcp,claude,openai,kairos}`.
+**Module map (TypeScript + Python parity):** `canonical` (RFC 8785-aligned hashing) · `guard` (rules → receipt) · `limits` (circuit breakers) · `trust` (graduated ledger) · `approval` (gate interface + 3 implementations) · `health` (rubber-stamp detection) · `pipeline` (orchestration) · `adapters/{mcp,claude,openai}`.
 
 ## 3. Design decisions, with rationale
 
@@ -132,31 +132,6 @@ mode. See [reliability research](RELIABILITY_RESEARCH.md).
 - Not a general hallucination detector (it prevents unsupported claims from
   authorizing consequential actions)
 
-## 6. Kairos relationship
-
-Surety replaces the standalone `kairos-guard` package and implements Kairos's
-deterministic pre-action `PolicyProvider`. Kairos remains the owner of Outcome
-Contracts, KPI evidence, provider execution receipts, and measured outcomes.
-
-This boundary keeps the projects complementary:
-
-```
-Kairos Outcome Contract + autonomy policy
-                  │
-                  ▼
-       Surety pre-action decision
-                  │
-          deny / require approval / allow
-                  │
-                  ▼
-       Kairos capability provider
-                  │
-                  ▼
-       Kairos provider confirmation + outcome evidence
-```
-
-See [the migration guide](KAIROS_MIGRATION.md).
-
-## 7. Dogfooding
+## 6. Dogfooding
 
 This repo's own automation is guarded by the library: a Claude Code `PreToolUse` hook ([scripts/surety-hook.mjs](../scripts/surety-hook.mjs), wired via [.claude/settings.json](../.claude/settings.json)) runs every agent tool call through `createGuard` — blocking pushes to main, workflow self-edits, and destructive commands — and appends hash-chained Action Receipts as a tamper-evident audit trail.

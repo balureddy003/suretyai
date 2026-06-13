@@ -41,7 +41,7 @@ The included refund workload is seeded synthetic data. It deliberately contains
 an `ambiguous_intent` class that passes structural checks, demonstrating where
 Surety needs stronger evidence, clarification, forecasting, or review.
 
-### Replacing synthetic data with Kairos traces
+### Replacing synthetic data with your own traces
 
 The replay engine accepts any `SimulationDataset`. Use
 `parseJsonlDataset()` for exports where each line contains:
@@ -53,7 +53,7 @@ The replay engine accepts any `SimulationDataset`. Use
   "expected": "safe",
   "risk_class": "routine_safe",
   "label_source": "verified_outcome",
-  "source_ref": "kairos-provider-receipt-123",
+  "source_ref": "provider-receipt-123",
   "loss_if_executed_minor": 0,
   "value_if_executed_minor": 500
 }
@@ -67,5 +67,5 @@ cases through the baseline and candidate policies.
 For labeled refund traces, the built-in runner accepts JSONL directly:
 
 ```bash
-npm run eval:simulation -- --input ./kairos-refunds.jsonl --provenance shadow
+npm run eval:simulation -- --input ./refunds.jsonl --provenance shadow
 ```

@@ -48,13 +48,13 @@ describe('comparative simulation framework', () => {
       expected: 'safe',
       risk_class: 'routine_safe',
       label_source: 'verified_outcome',
-      source_ref: 'kairos-provider-receipt-1',
+      source_ref: 'provider-receipt-1',
       loss_if_executed_minor: 0,
       value_if_executed_minor: 50,
     })
     const dataset = parseJsonlDataset(text, {
-      id: 'kairos-shadow',
-      name: 'Kairos shadow trace',
+      id: 'shadow-trace',
+      name: 'Shadow trace',
       description: 'Independently labeled trace',
       provenance: 'shadow',
     })

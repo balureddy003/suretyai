@@ -126,17 +126,9 @@ const hook = claudePreToolUse(guard)
 
 // OpenAI Agents SDK — input guardrail
 new Agent({ inputGuardrails: [openaiGuardrail(guard)] })
-
-// Kairos — implement its PolicyProvider execution boundary
-const policyProvider = createKairosPolicyProvider({
-  on_receipt: receipt => receiptStore.save(receipt),
-})
 ```
 
 Composes with — never replaces — the rest of the safety stack: content guardrails (LlamaFirewall, NeMo Guardrails) above, policy engines (OPA, Cedar) alongside. See [where Surety sits](docs/ARCHITECTURE.md#1-where-surety-sits-in-the-stack).
-
-Surety is also the planned replacement for the standalone `kairos-guard`
-package. See the [Kairos migration guide](docs/KAIROS_MIGRATION.md).
 
 ## Evals
 
@@ -156,7 +148,7 @@ The eval suite also includes a seeded
 refund-action stream through unguarded execution, static HITL, and the real
 Surety guard. It reports both prevented loss and residual risk. Simulation
 validates mechanisms and hypotheses; field claims require independently labeled
-Kairos historical or shadow-mode traces.
+historical or shadow-mode traces from your own execution system.
 
 ## Examples
 
@@ -190,7 +182,6 @@ In short: today Surety is production-ready as a **single-instance** decision bou
 |---|---|
 | [Architecture & design decisions](docs/ARCHITECTURE.md) | The stack position, pipeline, and 11 design decisions with rationale |
 | [Reliability research](docs/RELIABILITY_RESEARCH.md) | Deterministic assurance informed by calibrated forecasting and ML |
-| [Kairos migration guide](docs/KAIROS_MIGRATION.md) | Replace `kairos-guard` without duplicating Kairos outcome contracts |
 | [Action Receipt spec v0.1](spec/action-receipt.md) | The vendor-neutral receipt format — implement it without Surety |
 | [Examples](examples/) · [Evals](evals/) | Runnable demos and reproducible measurements |
 | [Roadmap](ROADMAP.md) | Phased plan with measurable exit criteria |

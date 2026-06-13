@@ -92,13 +92,3 @@ export {
   type OpenAIGuardrailContext,
   type OpenAIGuardrailOutput,
 } from './adapters/openai.js'
-export {
-  createKairosPolicyProvider,
-  type KairosAutonomyLevel,
-  type KairosAutonomyPolicy,
-  type KairosCapabilityAction,
-  type KairosPolicyContext,
-  type KairosPolicyDecision,
-  type KairosPolicyProvider,
-  type KairosPolicyProviderOptions,
-} from './adapters/kairos.js'
