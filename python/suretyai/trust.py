@@ -31,6 +31,8 @@ class TrustEntry:
     rejections: int
     consecutive_approvals: int
     updated_at: str
+    outcomes_succeeded: int = 0
+    outcomes_failed: int = 0
 
 
 @dataclass
@@ -82,14 +84,28 @@ class TrustLedger:
         e = self._get_or_create(agent_id, action_type)
         return TrustEntry(**e.__dict__)
 
-    def record(self, agent_id: str, action_type: str, approved: bool) -> RecordResult:
+    def record(
+        self,
+        agent_id: str,
+        action_type: str,
+        approved: bool,
+        suppress_graduation: bool = False,
+    ) -> RecordResult:
+        """Record an approval/rejection decision.
+
+        When ``suppress_graduation`` is True the decision is recorded but the
+        agent does not graduate — used when oversight health is degraded, so
+        approvals from a rubber-stamping reviewer cannot grant more autonomy.
+        Demotion on rejection always applies; safety is never suppressed.
+        """
         entry = self._get_or_create(agent_id, action_type)
         prev_level = entry.level
 
         if approved:
             entry.approvals += 1
             entry.consecutive_approvals += 1
-            entry.level = self._graduate(entry)
+            if not suppress_graduation:
+                entry.level = self._graduate(entry)
         else:
             entry.rejections += 1
             entry.consecutive_approvals = 0
@@ -101,6 +117,37 @@ class TrustLedger:
         return RecordResult(
             level=entry.level,
             graduated=entry.level > prev_level,
+            demoted=entry.level < prev_level,
+        )
+
+    def record_outcome(
+        self, agent_id: str, action_type: str, success: bool
+    ) -> RecordResult:
+        """Record an execution outcome — did the approved action actually work?
+
+        Approval is a prediction; the outcome is ground truth. A failed
+        outcome demotes exactly like a rejection (and counts against the
+        rejection rate), so an agent that collects approvals but does not
+        deliver cannot stay bonded. Successful outcomes are recorded but add
+        no approval credit — autonomy is earned at the gate, kept by results.
+        """
+        entry = self._get_or_create(agent_id, action_type)
+        prev_level = entry.level
+
+        if success:
+            entry.outcomes_succeeded += 1
+        else:
+            entry.outcomes_failed += 1
+            entry.rejections += 1
+            entry.consecutive_approvals = 0
+            if entry.level > TrustLevel.SUPERVISED:
+                entry.level = TrustLevel(entry.level - 1)
+
+        entry.updated_at = self._now().isoformat()
+
+        return RecordResult(
+            level=entry.level,
+            graduated=False,
             demoted=entry.level < prev_level,
         )
 

@@ -2,10 +2,12 @@
 
 # Surety AI
 
-### Bonded agents for the autonomous era
+### Probabilistic agents. Verified actions.
 
-**The open trust layer for autonomous AI agents.**
-Agents earn autonomy through track record — never by assumption. Every consequential action passes through deterministic gates, stays inside hard budget breakers, and leaves a tamper-evident receipt.
+**The open execution boundary for autonomous AI agents.**
+Agents may hallucinate; execution does not have to. Surety puts deterministic
+gates, hard exposure limits, and tamper-evident receipts between an agent's
+proposal and the real world.
 
 [![CI](https://github.com/balureddy003/suretyai/actions/workflows/ci.yml/badge.svg)](https://github.com/balureddy003/suretyai/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-0066cc)](LICENSE)
@@ -13,7 +15,7 @@ Agents earn autonomy through track record — never by assumption. Every consequ
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?logo=python&logoColor=white)](python/)
 [![Zero dependencies](https://img.shields.io/badge/runtime%20deps-zero-brightgreen)](package.json)
 
-[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Examples**](examples/) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
+[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Examples**](examples/) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 
 </div>
 
@@ -31,10 +33,21 @@ Principles stated in a prompt are not controls. The agent ecosystem has content 
 
 Surety is that layer. Four invariants, enforced in code:
 
-1. **Rules decide, LLMs propose.** Only deterministic rules allow an action. The same action always produces the same decision — there is no prompt to inject.
+1. **Rules decide, LLMs propose.** Only deterministic rules allow an action. The same action, policy, and state produce the same decision — there is no prompt to inject.
 2. **Trust is earned per action-type.** Agents graduate `SUPERVISED → PROBATIONARY → TRUSTED → BONDED` on track record, and one rejection demotes instantly. An email track record grants nothing for refunds.
 3. **Hard limits are hard.** Daily action/spend ceilings in integer minor units. Checked at the gate, committed only after execution.
 4. **Every decision leaves a receipt.** Hash-chained, payload-hashed (never payload-stored), verifiable by a third party. [An open spec](spec/action-receipt.md), not a log format.
+
+The next phase closes the loop: require independent evidence for an action's
+assumptions, hold unresolved actions against an exposure budget, verify the
+real outcome, and grant more autonomy only from verified success. We call this
+**outcome-bonded autonomy**. See the
+[product strategy](docs/PRODUCT_STRATEGY.md) and [roadmap](ROADMAP.md).
+
+Surety's research direction adds **calibrated foresight** without weakening the
+deterministic boundary: forecasting and ML may require simulation, canaries,
+approval, or denial, but may never override failed invariants or hard limits.
+See [reliability research](docs/RELIABILITY_RESEARCH.md).
 
 ## Quick start
 
@@ -113,9 +126,17 @@ const hook = claudePreToolUse(guard)
 
 // OpenAI Agents SDK — input guardrail
 new Agent({ inputGuardrails: [openaiGuardrail(guard)] })
+
+// Kairos — implement its PolicyProvider execution boundary
+const policyProvider = createKairosPolicyProvider({
+  on_receipt: receipt => receiptStore.save(receipt),
+})
 ```
 
 Composes with — never replaces — the rest of the safety stack: content guardrails (LlamaFirewall, NeMo Guardrails) above, policy engines (OPA, Cedar) alongside. See [where Surety sits](docs/ARCHITECTURE.md#1-where-surety-sits-in-the-stack).
+
+Surety is also the planned replacement for the standalone `kairos-guard`
+package. See the [Kairos migration guide](docs/KAIROS_MIGRATION.md).
 
 ## Evals
 
@@ -123,12 +144,19 @@ Every claim above is backed by a reproducible eval — CI runs them on every pus
 
 | # | Claim | Result |
 |---|---|---|
-| E1 | Deterministic gates can't be talked past (10-case adversarial corpus: case spoofing, string smuggling, type spoofing, credential laundering) | **0% bypass** |
-| E2 | Receipts can't collide or be forged (incl. the nested-key collision class — [spec §3](spec/action-receipt.md)) | **0 collisions** |
+| E1 | Included adversarial corpus: case spoofing, string smuggling, type spoofing, credential laundering | **0/10 bypassed** |
+| E2 | Included canonicalization and collision cases (incl. the nested-key collision class — [spec §3](spec/action-receipt.md)) | **6/6 correct** |
 | E3 | Graduated trust vs static HITL, 200 routine actions | **85% fewer human decisions** |
 | E4 | Oversight-health monitor: 4 rubber-stamp patterns + 1 healthy reviewer | **5/5 classified correctly** |
 
 Details and methodology: [evals/](evals/).
+
+The eval suite also includes a seeded
+[comparative simulation](evals/SIMULATION_RESULTS.md) that replays one labeled
+refund-action stream through unguarded execution, static HITL, and the real
+Surety guard. It reports both prevented loss and residual risk. Simulation
+validates mechanisms and hypotheses; field claims require independently labeled
+Kairos historical or shadow-mode traces.
 
 ## Examples
 
@@ -145,6 +173,8 @@ Five runnable demos, no API keys needed — including [the PocketOS incident rep
 | | |
 |---|---|
 | [Architecture & design decisions](docs/ARCHITECTURE.md) | The stack position, pipeline, and 11 design decisions with rationale |
+| [Reliability research](docs/RELIABILITY_RESEARCH.md) | Deterministic assurance informed by calibrated forecasting and ML |
+| [Kairos migration guide](docs/KAIROS_MIGRATION.md) | Replace `kairos-guard` without duplicating Kairos outcome contracts |
 | [Action Receipt spec v0.1](spec/action-receipt.md) | The vendor-neutral receipt format — implement it without Surety |
 | [Examples](examples/) · [Evals](evals/) | Runnable demos and reproducible measurements |
 | [Roadmap](ROADMAP.md) | Phased plan with measurable exit criteria |

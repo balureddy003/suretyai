@@ -11,13 +11,32 @@ export interface GuardOptions {
   /** Recorded as tenant_id on every receipt. */
   tenant_id?: string
   /**
-   * When true, each receipt carries the SHA-256 hash of the previous
-   * receipt issued by this guard, forming a tamper-evident chain that
-   * verifyChain() can validate.
+   * Tamper-evident chaining. `true` gives the guard its own ReceiptChain;
+   * pass a ReceiptChain instance to share one chain across components
+   * (e.g. the pipeline links FINAL receipts after gate enrichment, so the
+   * stored chain always verifies).
    */
-  chain?: boolean
+  chain?: boolean | ReceiptChain
   /** Injectable clock, for deterministic tests. */
   now?: () => Date
+}
+
+/**
+ * Links receipts into a tamper-evident hash chain. Each linked receipt
+ * carries the SHA-256 of the previously linked one.
+ *
+ * IMPORTANT: link the receipt you intend to STORE. A receipt mutated after
+ * linking will break verifyChain() — by design.
+ */
+export class ReceiptChain {
+  private prev: string | undefined
+
+  link(receipt: ActionReceipt): ActionReceipt {
+    const linked: ActionReceipt =
+      this.prev !== undefined ? { ...receipt, prev_receipt_hash: this.prev } : receipt
+    this.prev = hashReceipt(linked)
+    return linked
+  }
 }
 
 /** A guard function: present an action, receive a decision and its receipt. */
@@ -59,7 +78,8 @@ export function hashReceipt(receipt: ActionReceipt): string {
  * ```
  */
 export function createGuard(rules: GuardRule[], options: GuardOptions = {}): Guard {
-  let prevReceiptHash: string | undefined
+  const chain =
+    options.chain === true ? new ReceiptChain() : options.chain instanceof ReceiptChain ? options.chain : undefined
 
   return (action: AgentAction): GuardResult => {
     const failed = rules.filter((rule) => !rule.check(action))
@@ -76,18 +96,13 @@ export function createGuard(rules: GuardRule[], options: GuardOptions = {}): Gua
       allowed,
       failed_rules: failed.map((rule) => rule.id),
       ...(allowed ? {} : { outcome: 'policy_blocked' as const }),
-      ...(options.chain && prevReceiptHash !== undefined && { prev_receipt_hash: prevReceiptHash }),
-    }
-
-    if (options.chain) {
-      prevReceiptHash = hashReceipt(receipt)
     }
 
     return {
       allowed,
       failed_rules: failed.map((rule) => rule.id),
       reasons: failed.map((rule) => rule.reason),
-      receipt,
+      receipt: chain ? chain.link(receipt) : receipt,
     }
   }
 }

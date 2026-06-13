@@ -10,6 +10,7 @@
 // Core — deterministic guard
 export { canonicalize } from './canonical.js'
 export {
+  ReceiptChain,
   SPEC_VERSION,
   createGuard,
   hashPayload,
@@ -28,6 +29,7 @@ export {
   TrustLevel,
   TRUST_LEVEL_NAMES,
   type GraduationThresholds,
+  type RecordOptions,
   type TrustEntry,
   type TrustLedgerOptions,
   type TrustLedgerState,
@@ -90,3 +92,13 @@ export {
   type OpenAIGuardrailContext,
   type OpenAIGuardrailOutput,
 } from './adapters/openai.js'
+export {
+  createKairosPolicyProvider,
+  type KairosAutonomyLevel,
+  type KairosAutonomyPolicy,
+  type KairosCapabilityAction,
+  type KairosPolicyContext,
+  type KairosPolicyDecision,
+  type KairosPolicyProvider,
+  type KairosPolicyProviderOptions,
+} from './adapters/kairos.js'

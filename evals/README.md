@@ -16,3 +16,56 @@ npm run eval
 Results are written to [RESULTS.md](RESULTS.md). CI runs the suite on every push — a failing eval fails the build, so the README's claims can't silently drift from the code.
 
 Planned (roadmap Phase 2): an agentic red-team eval — an LLM actively tries to construct bypassing actions against a live pipeline, in the style of the OAP social-engineering benchmark.
+
+## Comparative simulation
+
+Run the counterfactual simulation separately:
+
+```bash
+npm run eval:simulation
+```
+
+The same labeled action stream is replayed through:
+
+1. unguarded execution;
+2. static human review with configurable error and fatigue assumptions;
+3. the real Surety deterministic guard.
+
+The report measures unsafe executions, safe actions blocked, review load,
+realized loss, prevented loss, retained value, and residual risk by failure
+class. Results are written to
+[SIMULATION_RESULTS.md](SIMULATION_RESULTS.md) and
+[SIMULATION_RESULTS.json](SIMULATION_RESULTS.json).
+
+The included refund workload is seeded synthetic data. It deliberately contains
+an `ambiguous_intent` class that passes structural checks, demonstrating where
+Surety needs stronger evidence, clarification, forecasting, or review.
+
+### Replacing synthetic data with Kairos traces
+
+The replay engine accepts any `SimulationDataset`. Use
+`parseJsonlDataset()` for exports where each line contains:
+
+```json
+{
+  "id": "action-123",
+  "action": { "type": "payment.refund", "payload": { "amount_minor": 2500 } },
+  "expected": "safe",
+  "risk_class": "routine_safe",
+  "label_source": "verified_outcome",
+  "source_ref": "kairos-provider-receipt-123",
+  "loss_if_executed_minor": 0,
+  "value_if_executed_minor": 500
+}
+```
+
+For credible field evaluation, derive `expected` and economic values from
+provider receipts and verified outcomes, not from the agent or an LLM judge.
+Set dataset provenance to `historical`, `shadow`, or `field`, and run the same
+cases through the baseline and candidate policies.
+
+For labeled refund traces, the built-in runner accepts JSONL directly:
+
+```bash
+npm run eval:simulation -- --input ./kairos-refunds.jsonl --provenance shadow
+```

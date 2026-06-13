@@ -52,7 +52,7 @@ Authorization answers a static question; trust answers a dynamic one. A policy s
                allowed ──► execute ──► limits.record(action)
 ```
 
-**Module map (TypeScript + Python parity):** `canonical` (RFC 8785-aligned hashing) · `guard` (rules → receipt) · `limits` (circuit breakers) · `trust` (graduated ledger) · `approval` (gate interface + 3 implementations) · `health` (rubber-stamp detection) · `pipeline` (orchestration) · `adapters/{mcp,claude,openai}`.
+**Module map (TypeScript + Python parity):** `canonical` (RFC 8785-aligned hashing) · `guard` (rules → receipt) · `limits` (circuit breakers) · `trust` (graduated ledger) · `approval` (gate interface + 3 implementations) · `health` (rubber-stamp detection) · `pipeline` (orchestration) · `adapters/{mcp,claude,openai,kairos}`.
 
 ## 3. Design decisions, with rationale
 
@@ -70,26 +70,58 @@ Authorization answers a static question; trust answers a dynamic one. A policy s
 | **Spec (Action Receipt) separate from brand (Surety)** | Standards get adopted when they sound un-owned. |
 | **Never an LLM-evaluated gate** | An LLM may propose; only deterministic rules allow. The same action always produces the same decision. |
 
-## 4. Target architecture (control plane)
+## 4. Target architecture: outcome-bonded autonomy
+
+The shipped v0.2 pipeline governs admission. The target architecture closes the
+loop around execution:
 
 ```
-   agents (any framework, any language)
-        │ adapters
-        ▼
-   suretyai core (TS / Python)  ──── receipts ────►  Receipt store
-        │                                            (SQLite/Postgres/S3
-        │ trust state                                 append-only)
-        ▼                                                  │
-   Trust persistence  ◄────────────────────────────────────┤
-   (pluggable store)                                       ▼
-                                              Control plane
-                                              · fleet trust dashboard
-                                              · approval inbox
-                                              · health alerting
-                                              · compliance export
+   agent proposes Action Contract
+                │
+                ▼
+   evidence verifiers ──► policy + exposure gate
+   · authoritative              │
+   · deterministic              ├─ deny / simulate / approve
+   · human-attested             ├─ canary / execute
+   · probabilistic-advisory     ▼
+                            execution
+                                │
+                                ▼
+                       outcome verifiers
+                                │
+                ┌───────────────┴────────────────┐
+                ▼                                ▼
+       close outcome receipt          compensate / expire / alert
+                │                                │
+                └───────────────┬────────────────┘
+                                ▼
+                  update autonomy + exposure
 ```
 
-The open core stays complete and self-sufficient. The receipt spec is the contract between the core and any control plane — including third-party ones. That is what makes it a standard rather than a product.
+An allowed action remains an unresolved liability until its outcome closes.
+Unresolved actions consume an open-loop exposure budget, so an agent cannot
+issue an unbounded sequence before failures become visible. Verified outcomes,
+not approvals, determine future autonomy.
+
+The open core remains self-sufficient. A commercial control plane can provide
+durable distributed state, approval routing, outcome closure, alerts, and audit
+exports without making the execution contract proprietary.
+
+### Calibrated foresight
+
+The target architecture separates deterministic assurance from probabilistic
+forecasting. Forecasts estimate action failure, expected loss, unsafe-state
+reachability, drift, and time to outcome closure. A deterministic mode router
+combines them:
+
+```text
+final_mode = min(requested_mode, policy_mode, forecast_mode)
+```
+
+Because modes are ordered from `deny` through `execute`, forecasting can only
+reduce autonomy. It can never override a failed invariant or hard limit. An
+expired, missing, drifted, or uncertified forecast falls back to a conservative
+mode. See [reliability research](RELIABILITY_RESEARCH.md).
 
 ## 5. What Surety is NOT (lane discipline)
 
@@ -97,7 +129,34 @@ The open core stays complete and self-sufficient. The receipt spec is the contra
 - Not a policy language (wraps Rego/Cedar, doesn't replace them)
 - Not an observability tool (receipts are evidence, not telemetry)
 - Not an agent framework (10 lines inside yours, never instead of yours)
+- Not a general hallucination detector (it prevents unsupported claims from
+  authorizing consequential actions)
 
-## 6. Dogfooding
+## 6. Kairos relationship
+
+Surety replaces the standalone `kairos-guard` package and implements Kairos's
+deterministic pre-action `PolicyProvider`. Kairos remains the owner of Outcome
+Contracts, KPI evidence, provider execution receipts, and measured outcomes.
+
+This boundary keeps the projects complementary:
+
+```
+Kairos Outcome Contract + autonomy policy
+                  │
+                  ▼
+       Surety pre-action decision
+                  │
+          deny / require approval / allow
+                  │
+                  ▼
+       Kairos capability provider
+                  │
+                  ▼
+       Kairos provider confirmation + outcome evidence
+```
+
+See [the migration guide](KAIROS_MIGRATION.md).
+
+## 7. Dogfooding
 
 This repo's own automation is guarded by the library: a Claude Code `PreToolUse` hook ([scripts/surety-hook.mjs](../scripts/surety-hook.mjs), wired via [.claude/settings.json](../.claude/settings.json)) runs every agent tool call through `createGuard` — blocking pushes to main, workflow self-edits, and destructive commands — and appends hash-chained Action Receipts as a tamper-evident audit trail.

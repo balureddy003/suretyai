@@ -35,7 +35,20 @@ export interface TrustEntry {
   rejections: number
   /** Consecutive approvals since last rejection or demotion. */
   consecutive_approvals: number
+  /** Execution outcomes reported via recordOutcome(). */
+  outcomes_succeeded?: number
+  outcomes_failed?: number
   updated_at: string
+}
+
+export interface RecordOptions {
+  /**
+   * Record the decision but do not graduate. Used by the pipeline when
+   * oversight health is degraded: approvals from a rubber-stamping
+   * reviewer are not valid signal for granting MORE autonomy.
+   * Demotion on rejection always applies — safety is never suppressed.
+   */
+  suppress_graduation?: boolean
 }
 
 export interface GraduationThresholds {
@@ -112,7 +125,8 @@ export class TrustLedger {
   record(
     agent_id: string,
     action_type: string,
-    approved: boolean
+    approved: boolean,
+    options: RecordOptions = {}
   ): { level: TrustLevel; graduated: boolean; demoted: boolean } {
     const entry = this.getOrCreate(agent_id, action_type)
     const prevLevel = entry.level
@@ -128,7 +142,7 @@ export class TrustLedger {
       }
     }
 
-    if (approved) {
+    if (approved && !options.suppress_graduation) {
       entry.level = this.graduate(entry)
     }
 
@@ -140,6 +154,40 @@ export class TrustLedger {
       graduated: entry.level > prevLevel,
       demoted: entry.level < prevLevel,
     }
+  }
+
+  /**
+   * Records an EXECUTION outcome — did the approved action actually work?
+   *
+   * Approval is a prediction; the outcome is the ground truth. A failed
+   * outcome demotes exactly like a rejection (and counts against the
+   * rejection rate), so an agent that collects approvals but doesn't
+   * deliver cannot stay bonded. Successful outcomes are recorded but add
+   * no approval credit — autonomy is earned at the gate, kept by results.
+   */
+  recordOutcome(
+    agent_id: string,
+    action_type: string,
+    success: boolean
+  ): { level: TrustLevel; demoted: boolean } {
+    const entry = this.getOrCreate(agent_id, action_type)
+    const prevLevel = entry.level
+
+    if (success) {
+      entry.outcomes_succeeded = (entry.outcomes_succeeded ?? 0) + 1
+    } else {
+      entry.outcomes_failed = (entry.outcomes_failed ?? 0) + 1
+      entry.rejections += 1
+      entry.consecutive_approvals = 0
+      if (entry.level > TrustLevel.SUPERVISED) {
+        entry.level = (entry.level - 1) as TrustLevel
+      }
+    }
+
+    entry.updated_at = this.now().toISOString()
+    this.entries.set(this.key(agent_id, action_type), entry)
+
+    return { level: entry.level, demoted: entry.level < prevLevel }
   }
 
   /** Serialize ledger state for persistence. */

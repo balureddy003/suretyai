@@ -1,7 +1,7 @@
 {
   "name": "suretyai",
   "version": "0.2.0",
-  "description": "The open trust layer for autonomous AI agents — deterministic gates, budget breakers, and tamper-evident action receipts.",
+  "description": "The open execution boundary for autonomous AI agents — deterministic gates, hard limits, and tamper-evident action receipts.",
   "keywords": [
     "ai-agents",
     "guardrails",
@@ -10,6 +10,8 @@
     "audit-trail",
     "action-receipt",
     "mcp",
+    "kairos",
+    "execution-boundary",
     "trust"
   ],
   "license": "Apache-2.0",
@@ -44,9 +46,10 @@
     "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval": "tsx evals/run.ts",
+    "eval": "tsx evals/run.ts && tsx evals/simulation/run.ts",
+    "eval:simulation": "tsx evals/simulation/run.ts",
     "examples": "for f in examples/0*.ts; do echo \"\\n━━━ $f ━━━\"; tsx \"$f\" || exit 1; done",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.evals.json",
     "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {

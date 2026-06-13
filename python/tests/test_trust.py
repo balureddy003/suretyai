@@ -66,3 +66,36 @@ def test_export_and_restore():
     t2 = TrustLedger.from_state(t1.export())
     assert t2.get_level("a", "x") == TrustLevel.PROBATIONARY
     assert t2.get_entry("a", "x").approvals == 5
+
+
+# ── Regression: outcome-linked trust and graduation suppression ─────────────
+
+def test_suppress_graduation_records_but_does_not_promote():
+    t = TrustLedger()
+    for _ in range(5):
+        r = t.record("a", "x", True, suppress_graduation=True)
+        assert r.graduated is False
+    # 5 approvals would normally graduate to PROBATIONARY — suppressed.
+    assert t.get_level("a", "x") == TrustLevel.SUPERVISED
+    assert t.get_entry("a", "x").approvals == 5
+
+
+def test_record_outcome_failure_demotes():
+    t = TrustLedger()
+    for _ in range(5):
+        t.record("a", "x", True)
+    assert t.get_level("a", "x") == TrustLevel.PROBATIONARY
+
+    r = t.record_outcome("a", "x", False)
+    assert r.demoted is True
+    assert r.level == TrustLevel.SUPERVISED
+    assert t.get_entry("a", "x").outcomes_failed == 1
+
+
+def test_record_outcome_success_adds_no_approval_credit():
+    t = TrustLedger()
+    for _ in range(10):
+        t.record_outcome("a", "x", True)
+    # Successful outcomes are tracked but grant no autonomy on their own.
+    assert t.get_level("a", "x") == TrustLevel.SUPERVISED
+    assert t.get_entry("a", "x").outcomes_succeeded == 10

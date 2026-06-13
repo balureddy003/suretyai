@@ -7,12 +7,18 @@
  * Every step produces or enriches the tamper-evident receipt.
  */
 
-import { createGuard, type Guard, type GuardOptions } from './guard.js'
+import { ReceiptChain, createGuard, type Guard, type GuardOptions } from './guard.js'
 import { ApprovalSignalHealth } from './health.js'
 import { BondLimits } from './limits.js'
 import { TrustLedger, TrustLevel } from './trust.js'
 import type { ActionReceipt, AgentAction, GuardRule } from './types.js'
 import type { ApprovalGate } from './approval.js'
+
+/** Health flags that suppress graduation. no_variance is deliberately
+ * excluded: a flawless agent legitimately produces all-approvals, so it is
+ * reported for visibility (pair with spot-check workflows) but does not
+ * block autonomy on its own. */
+const SUPPRESSING_FLAGS = new Set(['rapid_fire', 'batch_approval', 'dismiss_spike'])
 
 export type Decision =
   | 'auto_approved'   // trust high enough — no human gate needed
@@ -32,6 +38,12 @@ export interface EvaluationResult {
   trust_graduated: boolean
   /** true when this evaluation caused a trust level demotion. */
   trust_demoted: boolean
+  /**
+   * true when graduation was withheld because oversight health degraded
+   * (rapid_fire / batch_approval / dismiss_spike). The decision itself
+   * still stands; the approval just doesn't count toward MORE autonomy.
+   */
+  graduation_suppressed?: boolean
   /** Current oversight health report, if a gate was involved. */
   health?: ReturnType<ApprovalSignalHealth['assess']>
 }
@@ -82,18 +94,35 @@ export function createPipeline(options: PipelineOptions): Pipeline {
   const { rules, trust, approval, limits, health, auto_approve_from, ...guardOpts } = options
   const autoApproveFrom = auto_approve_from ?? TrustLevel.BONDED
 
-  const guard = createGuard(rules, guardOpts)
+  // The pipeline owns the chain and links FINAL receipts (after any gate
+  // enrichment), so stored chains always pass verifyChain(). The inner
+  // guard never chains — its receipt is provisional until the gate decides.
+  const { chain: chainOpt, ...innerGuardOpts } = guardOpts
+  const chain = chainOpt === true ? new ReceiptChain() : chainOpt instanceof ReceiptChain ? chainOpt : undefined
+  const seal = (r: ActionReceipt): ActionReceipt => (chain ? chain.link(r) : r)
+
+  // Limits are CHECKED at the gate (via the auto-included rule below) but
+  // never COMMITTED by the pipeline. Budget commits belong to the caller,
+  // after successful execution — a gate-approved action that is never
+  // executed must not consume budget:
+  //   const r = await pipeline.run(action)
+  //   if (r.allowed) { await execute(action); limits.record(action) }
+  const effectiveRules =
+    limits && !rules.some((r) => r.id === 'bond-limits') ? [limits.rule(), ...rules] : rules
+  const guard = createGuard(effectiveRules, innerGuardOpts)
 
   return {
     guard,
     async run(action: AgentAction): Promise<EvaluationResult> {
       // 1. Deterministic rules run first — always, no exceptions.
+      //    (The guard links blocked/clean receipts into the chain itself.)
       const guardResult = guard(action)
 
       if (!guardResult.allowed) {
         return {
           decision: 'policy_blocked',
           ...guardResult,
+          receipt: seal(guardResult.receipt),
           trust_level: trust?.getLevel(guardOpts.agent_id ?? '', action.type) ?? TrustLevel.SUPERVISED,
           trust_graduated: false,
           trust_demoted: false,
@@ -102,10 +131,10 @@ export function createPipeline(options: PipelineOptions): Pipeline {
 
       // 2. No trust ledger — auto-approve everything that passed rules.
       if (!trust) {
-        if (limits) limits.record(action)
         return {
           decision: 'auto_approved',
           ...guardResult,
+          receipt: seal(guardResult.receipt),
           trust_level: TrustLevel.BONDED,
           trust_graduated: false,
           trust_demoted: false,
@@ -117,10 +146,10 @@ export function createPipeline(options: PipelineOptions): Pipeline {
 
       // 3. Trust high enough — auto-approve within bond limits.
       if (trustLevel >= autoApproveFrom) {
-        if (limits) limits.record(action)
         return {
           decision: 'auto_approved',
           ...guardResult,
+          receipt: seal(guardResult.receipt),
           trust_level: trustLevel,
           trust_graduated: false,
           trust_demoted: false,
@@ -129,13 +158,20 @@ export function createPipeline(options: PipelineOptions): Pipeline {
 
       // 4. Needs human approval.
       if (!approval) {
-        // No gate configured — block the action rather than silently auto-approve.
+        // No gate configured — fail closed, and make the RECEIPT say so too.
+        const blockedReceipt = seal({
+          ...guardResult.receipt,
+          allowed: false,
+          failed_rules: ['no-approval-gate'],
+          outcome: 'policy_blocked',
+          outcome_reason: 'Action requires human approval but no approval gate is configured',
+        })
         return {
           decision: 'policy_blocked',
           allowed: false,
           failed_rules: ['no-approval-gate'],
           reasons: ['Action requires human approval but no approval gate is configured'],
-          receipt: guardResult.receipt,
+          receipt: blockedReceipt,
           trust_level: trustLevel,
           trust_graduated: false,
           trust_demoted: false,
@@ -147,11 +183,20 @@ export function createPipeline(options: PipelineOptions): Pipeline {
         action,
         trust_level: trustLevel,
       })
-
       const approved = apprDecision === 'approved'
-      const { level, graduated, demoted } = trust.record(agentId, action.type, approved)
 
+      // Health records BEFORE trust so the current decision is part of the
+      // assessment. Degraded reviewer behavior (rapid-fire, batch,
+      // dismiss-spike) means approvals are not valid signal for granting
+      // more autonomy — graduation is suppressed; demotion never is.
       if (health) health.record(approved)
+      const healthReport = health?.assess()
+      const suppressGraduation =
+        healthReport !== undefined && healthReport.flags.some((f) => SUPPRESSING_FLAGS.has(f))
+
+      const { level, graduated, demoted } = trust.record(agentId, action.type, approved, {
+        suppress_graduation: suppressGraduation,
+      })
 
       const allowed = approved
       const decision: Decision =
@@ -159,16 +204,15 @@ export function createPipeline(options: PipelineOptions): Pipeline {
         : apprDecision === 'rejected' ? 'gate_rejected'
         : 'gate_timeout'
 
-      if (allowed && limits) limits.record(action)
-
-      const updatedReceipt: ActionReceipt = {
+      // Enrich FIRST, then link — the stored receipt is the linked one,
+      // so chain verification holds.
+      const finalReceipt = seal({
         ...guardResult.receipt,
         allowed,
         outcome: allowed ? 'executed' : 'policy_blocked',
-        ...(apprDecision === 'timeout' && { outcome_reason: 'Gate timed out' }),
-      }
-
-      const healthReport = health?.assess()
+        ...(apprDecision === 'timeout' && { outcome_reason: 'Gate timed out — blocked (fail closed)' }),
+        ...(apprDecision === 'rejected' && { outcome_reason: 'Human reviewer rejected the action' }),
+      })
 
       return {
         decision,
@@ -181,12 +225,14 @@ export function createPipeline(options: PipelineOptions): Pipeline {
                 ? 'Approval gate timed out — action blocked (fail closed)'
                 : 'Human reviewer rejected the action',
             ],
-        receipt: updatedReceipt,
+        receipt: finalReceipt,
         trust_level: level,
         trust_graduated: graduated,
         trust_demoted: demoted,
+        ...(suppressGraduation && { graduation_suppressed: true }),
         ...(healthReport !== undefined && { health: healthReport }),
       }
     },
   }
 }
+
