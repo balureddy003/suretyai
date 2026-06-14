@@ -1,0 +1,77 @@
+name: Bug Report
+description: File a bug report to help us improve Surety AI
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        **Security issues:** Please do not file public issues for security vulnerabilities. Use [private vulnerability reporting](https://github.com/balureddy003/suretyai/security/advisories/new) instead.
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      description: Which implementation are you using?
+      options:
+        - TypeScript
+        - Python
+        - Both
+      validations:
+        required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug in 1-2 sentences.
+      placeholder: The guard allowed an action that should have been blocked...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal code snippet that demonstrates the issue.
+      placeholder: |
+        ```ts
+        const guard = createGuard([...])
+        const result = guard(action)
+        console.log(result.allowed) // Expected: false, Actual: true
+        ```
+      render: ts
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+      placeholder: The guard should have blocked the action because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please run the following and paste the output.
+      placeholder: |
+        Node version: node --version
+        Package version: npm list @suretyainpm/suretyai
+        Python version: python --version
+        Package version: pip show suretyai
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/balureddy003/suretyai/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
