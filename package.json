@@ -49,11 +49,13 @@
     "eval:simulation": "tsx evals/simulation/run.ts",
     "examples": "for f in examples/0*.ts; do echo \"\\n━━━ $f ━━━\"; tsx \"$f\" || exit 1; done",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.evals.json",
+    "docs": "typedoc",
     "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
     "tsx": "^4.19.0",
+    "typedoc": "^0.28.19",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

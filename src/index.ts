@@ -7,7 +7,15 @@
  * https://github.com/balureddy003/suretyai
  */
 
-// Core — deterministic guard
+/**
+ * @module Surety AI
+ * @description The open trust layer for autonomous AI agents.
+ */
+
+/**
+ * Core — deterministic guard
+ * @category Core
+ */
 export { canonicalize } from './canonical.js'
 export {
   ReceiptChain,
@@ -20,10 +28,16 @@ export {
   type GuardOptions,
 } from './guard.js'
 
-// Bond limits — hard daily circuit breakers
+/**
+ * Bond limits — hard daily circuit breakers
+ * @category Limits
+ */
 export { BondLimits, type BondLimitsConfig } from './limits.js'
 
-// Graduated trust — agents earn autonomy through track record
+/**
+ * Graduated trust — agents earn autonomy through track record
+ * @category Trust
+ */
 export {
   TrustLedger,
   TrustLevel,
@@ -35,7 +49,10 @@ export {
   type TrustLedgerState,
 } from './trust.js'
 
-// Approval gates — human-in-the-loop, pluggable channels
+/**
+ * Approval gates — human-in-the-loop, pluggable channels
+ * @category Approval
+ */
 export {
   ConsoleApprovalGate,
   MemoryApprovalGate,
@@ -47,7 +64,10 @@ export {
   type WebhookApprovalGateOptions,
 } from './approval.js'
 
-// Approval signal health — guards the guards
+/**
+ * Approval signal health — guards the guards
+ * @category Health
+ */
 export {
   ApprovalSignalHealth,
   type ApprovalSignalHealthOptions,
@@ -55,7 +75,10 @@ export {
   type HealthReport,
 } from './health.js'
 
-// Pipeline — orchestrates rules → trust → gate → receipt
+/**
+ * Pipeline — orchestrates rules → trust → gate → receipt
+ * @category Pipeline
+ */
 export {
   createPipeline,
   type Decision,
@@ -64,7 +87,10 @@ export {
   type PipelineOptions,
 } from './pipeline.js'
 
-// Types — Action Receipt v0.1 specification
+/**
+ * Types — Action Receipt v0.1 specification
+ * @category Types
+ */
 export type {
   ActionReceipt,
   AgentAction,
@@ -73,7 +99,10 @@ export type {
   ReceiptOutcome,
 } from './types.js'
 
-// Adapters — framework integrations
+/**
+ * Adapters — framework integrations
+ * @category Adapters
+ */
 export {
   BlockedByGuardError,
   mcpGuard,

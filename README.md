@@ -17,7 +17,7 @@ proposal and the real world.
 [![npm](https://img.shields.io/npm/v/@suretyainpm/suretyai?logo=npm&color=cb3837)](https://www.npmjs.com/package/@suretyainpm/suretyai)
 [![PyPI](https://img.shields.io/pypi/v/suretyai?logo=python&logoColor=white&color=3776ab)](https://pypi.org/project/suretyai/)
 
-[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Production readiness**](#production-readiness) · [**Examples**](examples/) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
+[**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Production readiness**](#production-readiness) · [**Examples**](examples/) · [**API Docs**](docs/api/index.html) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 
 </div>
 
