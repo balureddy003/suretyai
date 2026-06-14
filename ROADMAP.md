@@ -38,7 +38,7 @@ Research architecture for calibrated forecasting and ML:
 - [x] Runnable examples incl. the PocketOS-incident replay and the earned-autonomy demo ([examples/](examples/))
 - [x] **Eval suite** with reproducible numbers: 0% adversarial bypass, 0 hash collisions, 85% approval-load reduction, 5/5 oversight-health classification ([evals/](evals/))
 - [x] Dogfooding: this repo's CI agent runs under a Surety guard (PreToolUse hook, receipted)
-- [ ] Publish v0.2.0 to npm + PyPI (one manual bootstrap publish unblocks CI publishing)
+- [x] Publish v0.2.1 to npm (`@suretyainpm/suretyai`) + PyPI (`suretyai`) via GitHub Actions
 - [ ] Receipt persistence interfaces: SQLite + JSONL append-only stores
 - [ ] Python pipeline + approval-gate parity (currently TS-only)
 

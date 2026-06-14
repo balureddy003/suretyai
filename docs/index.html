@@ -17,8 +17,10 @@
       <nav class="nav">
         <a href="#why">Why</a>
         <a href="#quickstart">Quick start</a>
+        <a href="#earned">Earned autonomy</a>
         <a href="#spec">Spec</a>
         <a href="https://github.com/balureddy003/suretyai/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Architecture</a>
+        <a href="https://github.com/balureddy003/suretyai/tree/main/examples" target="_blank" rel="noopener">Examples</a>
         <a href="https://github.com/balureddy003/suretyai" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
@@ -33,10 +35,16 @@
           <span class="badge">Apache-2.0</span>
           <span class="badge">Zero dependencies</span>
           <span class="badge">TypeScript & Python</span>
+          <a href="https://www.npmjs.com/package/@suretyainpm/suretyai" target="_blank" rel="noopener" class="badge">npm</a>
+          <a href="https://pypi.org/project/suretyai/" target="_blank" rel="noopener" class="badge">PyPI</a>
         </div>
         <div class="install">
           <code>npm install @suretyainpm/suretyai</code>
-          <button class="copy-btn" aria-label="Copy install command" onclick="copyInstall()">Copy</button>
+          <button class="copy-btn" aria-label="Copy npm install command" onclick="copyInstall()">Copy</button>
+        </div>
+        <div class="install" style="margin-top:0.5rem">
+          <code>pip install suretyai</code>
+          <button class="copy-btn" aria-label="Copy pip install command" onclick="copyInstallPy()">Copy</button>
         </div>
       </div>
     </section>
@@ -98,6 +106,50 @@ const result = guard({
 result.allowed // false
 result.reasons // ['Refunds above £50.00 require human approval']
 result.receipt // tamper-evident Action Receipt</code></pre>
+      </div>
+    </section>
+
+    <section id="earned" class="earned">
+      <div class="container">
+        <h2>Earned autonomy</h2>
+        <p>Agents graduate <code>SUPERVISED → PROBATIONARY → TRUSTED → BONDED</code> on track record. One rejection demotes instantly. An email track record grants nothing for refunds.</p>
+        <table>
+          <thead>
+            <tr><th></th><th>Static HITL</th><th>No HITL</th><th><strong>Surety graduated trust</strong></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Human decisions per 100 routine actions</td>
+              <td>100</td>
+              <td>0</td>
+              <td><strong>30, falling toward 0</strong></td>
+            </tr>
+            <tr>
+              <td>Rogue action stopped before execution</td>
+              <td>(if reviewer awake)</td>
+              <td>—</td>
+              <td><strong>rules + gate + limits</strong></td>
+            </tr>
+            <tr>
+              <td>Reviewer fatigue → reflexive approval</td>
+              <td>guaranteed at scale</td>
+              <td>n/a</td>
+              <td><strong>detected and flagged</strong></td>
+            </tr>
+            <tr>
+              <td>Misbehavior consequence</td>
+              <td>none</td>
+              <td>none</td>
+              <td><strong>instant demotion</strong></td>
+            </tr>
+            <tr>
+              <td>Audit trail</td>
+              <td>app logs</td>
+              <td>agent's own logs</td>
+              <td><strong>hash-chained receipts</strong></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -171,7 +223,16 @@ result.receipt // tamper-evident Action Receipt</code></pre>
     function copyInstall() {
       const code = 'npm install @suretyainpm/suretyai';
       navigator.clipboard.writeText(code).then(() => {
-        const btn = document.querySelector('.copy-btn');
+        const btn = event.target;
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = prev, 1500);
+      });
+    }
+    function copyInstallPy() {
+      const code = 'pip install suretyai';
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = event.target;
         const prev = btn.textContent;
         btn.textContent = 'Copied!';
         setTimeout(() => btn.textContent = prev, 1500);

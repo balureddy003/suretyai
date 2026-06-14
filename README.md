@@ -14,6 +14,8 @@ proposal and the real world.
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?logo=python&logoColor=white)](python/)
 [![Zero dependencies](https://img.shields.io/badge/runtime%20deps-zero-brightgreen)](package.json)
+[![npm](https://img.shields.io/npm/v/@suretyainpm/suretyai?logo=npm&color=cb3837)](https://www.npmjs.com/package/@suretyainpm/suretyai)
+[![PyPI](https://img.shields.io/pypi/v/suretyai?logo=python&logoColor=white&color=3776ab)](https://pypi.org/project/suretyai/)
 
 [**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Production readiness**](#production-readiness) · [**Examples**](examples/) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 
@@ -53,6 +55,8 @@ See [reliability research](docs/RELIABILITY_RESEARCH.md).
 
 ```bash
 npm install @suretyainpm/suretyai        # Python: pip install suretyai
+
+Registry: [npm](https://www.npmjs.com/package/@suretyainpm/suretyai) · [PyPI](https://pypi.org/project/suretyai/)
 ```
 
 ```ts
@@ -77,6 +81,29 @@ const result = guard({ type: 'payment.refund', payload: { invoice: 'INV-1042', a
 result.allowed   // false — deterministically, every time
 result.reasons   // ['Refunds above £50.00 require human approval']
 result.receipt   // tamper-evident Action Receipt for your audit store
+```
+
+**Python** — same guard, same guarantees:
+
+```python
+from suretyai import BondLimits, BondLimitsConfig, create_guard, GuardOptions, GuardRule, AgentAction
+
+limits = BondLimits(BondLimitsConfig(max_actions_per_day=100, max_spend_per_day_minor=10_000))
+
+guard = create_guard([
+    limits.rule(),
+    GuardRule(
+        id="refund-ceiling",
+        check=lambda a: a.type != "payment.refund" or a.payload["amount_minor"] <= 5000,
+        reason="Refunds above £50.00 require human approval",
+    ),
+], GuardOptions(agent_id="billing-agent", chain=True))
+
+result = guard(AgentAction(type="payment.refund", payload={"invoice": "INV-1042", "amount_minor": 9900}))
+
+result.allowed   # False
+result.reasons   # ['Refunds above £50.00 require human approval']
+result.receipt   # tamper-evident Action Receipt
 ```
 
 ## Earned autonomy
@@ -132,7 +159,7 @@ Composes with — never replaces — the rest of the safety stack: content guard
 
 ## Evals
 
-Every claim above is backed by a reproducible eval — CI runs them on every push, so the README can't drift from the code. Reproduce with `npm run eval`:
+Every claim above is backed by a reproducible eval — CI runs them on every push, so the README can't drift from the code. Reproduce with `npm run eval` (TypeScript) or `cd python && pytest` (Python):
 
 | # | Claim | Result |
 |---|---|---|

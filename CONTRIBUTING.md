@@ -16,12 +16,12 @@ PRs that violate these will be declined regardless of quality — they're the pr
 
 ```bash
 npm install
-npm run typecheck && npm test     # 45 TS tests
+npm run typecheck && npm test     # 55 TS tests across 7 files
 npm run eval                      # reproducible claims — must stay green
 npm run examples                  # all five demos must run clean
 
 cd python && python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest                  # 35 Python tests
+.venv/bin/pytest                  # 38 Python tests across 5 files
 ```
 
 CI runs all of the above on Node 20/22 and Python 3.10–3.12.
