@@ -16,6 +16,8 @@ proposal and the real world.
 [![Zero dependencies](https://img.shields.io/badge/runtime%20deps-zero-brightgreen)](package.json)
 [![npm](https://img.shields.io/npm/v/@suretyainpm/suretyai?logo=npm&color=cb3837)](https://www.npmjs.com/package/@suretyainpm/suretyai)
 [![PyPI](https://img.shields.io/pypi/v/suretyai?logo=python&logoColor=white&color=3776ab)](https://pypi.org/project/suretyai/)
+[![TS Coverage](https://img.shields.io/badge/TS%20coverage-69%25-yellowgreen)](.)
+[![Python Coverage](https://img.shields.io/badge/Python%20coverage-100%25-brightgreen)](.)
 
 [**Why**](#why) · [**Quick start**](#quick-start) · [**Earned autonomy**](#earned-autonomy) · [**Works with your stack**](#works-with-your-stack) · [**Evals**](#evals) · [**Production readiness**](#production-readiness) · [**Examples**](examples/) · [**API Docs**](docs/api/index.html) · [**Strategy**](docs/PRODUCT_STRATEGY.md) · [**Architecture**](docs/ARCHITECTURE.md) · [**Spec**](spec/action-receipt.md) · [**Roadmap**](ROADMAP.md)
 

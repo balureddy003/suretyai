@@ -9,3 +9,5 @@ python/*.egg-info/
 __pycache__/
 *.pyc
 .codex/
+python/.coverage
+python/coverage.json
