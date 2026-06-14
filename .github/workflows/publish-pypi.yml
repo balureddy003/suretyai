@@ -35,8 +35,6 @@ jobs:
     environment:
       name: release
       url: https://pypi.org/p/suretyai
-    permissions:
-      id-token: write  # required for trusted publishing (OIDC — no token secret needed)
     steps:
       - name: Download dist artifact
         uses: actions/download-artifact@v4
@@ -46,3 +44,5 @@ jobs:
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.pypi }}
