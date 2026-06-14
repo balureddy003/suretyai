@@ -1,6 +1,6 @@
 {
   "name": "@suretyainpm/suretyai",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The open execution boundary for autonomous AI agents — deterministic gates, hard limits, and tamper-evident action receipts.",
   "keywords": [
     "ai-agents",
