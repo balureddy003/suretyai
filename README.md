@@ -203,6 +203,34 @@ Read this before putting Surety on a real money path — we'd rather you know th
 
 In short: today Surety is production-ready as a **single-instance** decision boundary with manual state persistence. Distributed, durable, atomic state is next.
 
+## FAQ
+
+**Q: Does Surety replace my LLM safety layer?**
+No. Surety is a *complementary* execution boundary. It sits between the agent's decision and the real world, after content guardrails (LlamaFirewall, NeMo) and authorization (OPA, Cedar) have run.
+
+**Q: Can I use Surety with Python agents?**
+Yes. The Python package (`pip install suretyai`) has full parity for guard, trust, limits, and health. The async pipeline and approval gates are TypeScript-only today — see the [roadmap](ROADMAP.md).
+
+**Q: Why integer minor units for money?**
+Floating-point money in a safety system is malpractice. `10_000` means £100.00 unambiguously. No rounding, no precision loss, no exploit.
+
+**Q: How do I persist trust state across restarts?**
+```ts
+const state = ledger.export()
+// save to disk / DB / Redis
+const restored = TrustLedger.from(state)
+```
+Durable backends are on the [roadmap](ROADMAP.md) for Phase 2.
+
+**Q: The guard allowed something it shouldn't have — is this a bypass?**
+Probably not a bypass. Most likely: (1) the rule predicate has a logic gap, (2) `limits.record(action)` wasn't called after execution, or (3) the action passed the guard but failed at the approval gate. File a [bug report](https://github.com/balureddy003/suretyai/issues/new?template=bug_report.yml) with reproduction steps.
+
+**Q: Can an LLM decide whether an action is allowed?**
+No. That is the project's founding invariant. An LLM may propose; only deterministic rules allow. The same action, policy, and state produce the same decision — there is no prompt to inject.
+
+**Q: How do I add a new adapter (e.g., LangGraph, CrewAI)?**
+Adapters are thin wrappers around a `Guard` object. See the [MCP](src/adapters/mcp.ts) or [Claude](src/adapters/claude.ts) adapters for patterns. Open a [feature request](https://github.com/balureddy003/suretyai/issues/new?template=feature_request.yml) to discuss parity plans.
+
 ## Documentation
 
 | | |
